@@ -269,6 +269,57 @@
             </div>
           </div>
           <div class="panel" style="margin-top: 20px;">
+            <div class="panel-head"><h2>📚 Bảng III.3: Sơ đồ xác định hệ số khí động (C<sub>e</sub>)</h2></div>
+            <div class="panel-body">
+              <div class="table-wrap">
+                <table class="lookup-table">
+                  <thead>
+                    <tr>
+                      <th rowspan="2">Sơ đồ và hệ số</th>
+                      <th rowspan="2">α (độ)</th>
+                      <th colspan="4">h<sub>1</sub> / L</th>
+                    </tr>
+                    <tr>
+                      <th>0</th>
+                      <th>0,5</th>
+                      <th>1</th>
+                      <th>≥ 2</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td rowspan="4" style="text-align: center; vertical-align: middle;"><strong>C<sub>e1</sub></strong><br>(Mái đón)</td>
+                      <td>0</td><td>0</td><td>-0,6</td><td>-0,7</td><td>-0,8</td>
+                    </tr>
+                    <tr>
+                      <td>20</td><td>+0,2</td><td>-0,4</td><td>-0,7</td><td>-0,8</td>
+                    </tr>
+                    <tr>
+                      <td>40</td><td>+0,4</td><td>+0,3</td><td>-0,2</td><td>-0,4</td>
+                    </tr>
+                    <tr>
+                      <td>60</td><td>+0,8</td><td>+0,8</td><td>+0,8</td><td>+0,8</td>
+                    </tr>
+                    <tr style="border-top: 2px solid #e2e8f0;">
+                      <td style="text-align: center;"><strong>C<sub>e2</sub></strong> (Mái hút)</td>
+                      <td>≤ 60</td><td>-0,4</td><td>-0,4</td><td>-0,5</td><td>-0,8</td>
+                    </tr>
+                    <tr>
+                      <td rowspan="2" style="text-align: center; vertical-align: middle;"><strong>C<sub>e3</sub></strong><br>(Tường hút)</td>
+                      <td>b/L ≤ 1</td><td>-0,4</td><td>-0,4</td><td>-0,5</td><td>-0,6</td>
+                    </tr>
+                    <tr>
+                      <td>b/L ≥ 2</td><td>-0,5</td><td>-0,5</td><td>-0,6</td><td>-0,6</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p style="font-size: 0.8rem; color: var(--text2); margin-top: 10px; font-style: italic;">
+                * Trích Bảng III.3 - Sơ đồ xác định hệ số khí động cho nhà mái dốc. Hệ thống sử dụng nội suy song tuyến tính để tính toán chính xác theo độ dốc α và tỷ lệ h<sub>1</sub>/L.
+              </p>
+            </div>
+          </div>
+          <div class="panel" style="margin-top: 20px;">
             <div class="panel-head"><h2>📚 Bảng IV.2: Hệ số uốn dọc φ của cấu kiện chịu nén đúng tâm</h2></div>
             <div class="panel-body">
               <div class="table-wrap" style="max-height: 400px; overflow-y: auto; overflow-x: auto;">
@@ -353,6 +404,9 @@
                 <div class="form-group"><label>c<sub>e2</sub> (Mái hút)</label><input type="number" id="ce_roof2" value="-0.4" step="0.05"></div>
                 <div class="form-group"><label>c<sub>e3</sub> (Cột hút)</label><input type="number" id="ce_pull" value="-0.5" step="0.05"></div>
               </div>
+              <button class="btn-outline" id="btnLookupCe" style="width:100%; margin-top:10px; padding: 8px; border-radius: 6px; font-size: 0.85rem; font-weight: 500; border: 1px dashed var(--accent); color: var(--accent); background: rgba(96,165,250,0.05); cursor: pointer; transition: all 0.2s;">
+                🎯 Tự động xác định hệ số khí động (Bảng III.3)
+              </button>
               <div class="divider"></div>
               <div class="section-label">4. Hoạt tải cầu trục</div>
               <div class="form-row form-row-4">
@@ -416,9 +470,16 @@
                 <div class="form-group"><label>Dày bản bụng t<sub>w</sub></label><input type="number" id="sec_tw" value="6" step="1"></div>
                 <div class="form-group"><label>Dày bản cánh t<sub>f</sub></label><input type="number" id="sec_tf" value="10" step="1"></div>
               </div>
+              <button class="btn-outline" id="btnSuggestCol" style="width:100%; margin-bottom:15px; border-style: dotted;">✨ Gợi ý tiết diện sơ bộ (H/20)</button>
+              
+              <div class="form-row form-row-3" style="margin-top: 10px; background: rgba(96,165,250,0.03); padding: 10px; border-radius: 8px; border: 1px solid rgba(96,165,250,0.1);">
+                <div class="form-group"><label>m<sub>x</sub> (Lệch tâm)</label><input type="number" id="calc_m" value="0" readonly style="color:var(--accent); font-weight:600"></div>
+                <div class="form-group"><label>λ&#772;<sub>x</sub> (Độ mảnh)</label><input type="number" id="calc_lambda_bar" value="0" readonly style="color:var(--accent); font-weight:600"></div>
+                <div class="form-group"><label>η (Bảng IV.5)</label><input type="number" id="calc_eta" value="0" readonly style="color:var(--accent); font-weight:600"></div>
+              </div>
               <div class="form-row form-row-3" style="margin-top: 10px;">
-                <div class="form-group"><label>Hệ số ổn định φ<sub>e</sub> (Bảng IV.3)</label><input type="number" id="phi_e" value="0.178" step="0.001"></div>
-                <div class="form-group"><label>Hệ số ổn định φ<sub>y</sub> (Bảng IV.2)</label><input type="number" id="phi_y" value="0.743" step="0.001"></div>
+                <div class="form-group"><label>φ<sub>e</sub> (Tự động)</label><input type="number" id="phi_e" value="0.178" readonly style="background:#f8fafc"></div>
+                <div class="form-group"><label>φ<sub>y</sub> (Tự động)</label><input type="number" id="phi_y" value="0.743" readonly style="background:#f8fafc"></div>
                 <div class="form-group"><label>Hệ số làm việc γ<sub>c</sub></label><input type="number" id="gamma_c" value="1.0" step="0.05"></div>
               </div>
             </div>
@@ -448,6 +509,8 @@
                 <div class="form-group"><label>Dày bản bụng t<sub>w</sub></label><input type="number" id="raft_tw" value="8" step="1"></div>
                 <div class="form-group"><label>Dày bản cánh t<sub>f</sub></label><input type="number" id="raft_tf" value="12" step="1"></div>
               </div>
+              <button class="btn-outline" id="btnSuggestRaft" style="width:100%; margin-bottom:15px; border-style: dotted;">✨ Gợi ý tiết diện sơ bộ (L/30)</button>
+              
               <div class="divider"></div>
               <div class="section-label">3. Các hệ số ổn định & điều kiện biên</div>
               <div class="form-row form-row-3">
@@ -456,8 +519,8 @@
                 <div class="form-group"><label>Hệ số làm việc γ<sub>c</sub></label><input type="number" id="raft_gamma_c" value="1.0" step="0.05"></div>
               </div>
               <div class="form-row form-row-2">
-                <div class="form-group"><label>Hệ số φ (Uốn dọc)</label><input type="number" id="raft_phi" value="0.95" step="0.001"></div>
-                <div class="form-group"><label>Hệ số φ<sub>e</sub> (Lệch tâm)</label><input type="number" id="raft_phi_e" value="0.85" step="0.001"></div>
+                <div class="form-group"><label>Hệ số φ (Tự động)</label><input type="number" id="raft_phi" value="0.95" readonly style="background:#f8fafc"></div>
+                <div class="form-group"><label>Hệ số φ<sub>e</sub> (Tự động)</label><input type="number" id="raft_phi_e" value="0.85" readonly style="background:#f8fafc"></div>
               </div>
             </div>
           </div>

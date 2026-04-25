@@ -146,10 +146,148 @@ function updateNumFrames() {
 $('buildingLength').addEventListener('input', updateNumFrames);
 $('stepB').addEventListener('input', updateNumFrames);
 
-// === Auto-calc: W0 từ vùng gió ===
-$('windZone').addEventListener('change', function() {
-  $('W0').value = WIND_DB[this.value] || 83;
-});
+// === Auto-calc: W0 và K từ vùng gió & địa hình ===
+function syncWindData() {
+  const zone = $('windZone').value;
+  const w0_dan = WIND_DB[zone] || 83;
+  const w0_kn = w0_dan / 100;
+  
+  $('W0').value = w0_dan;
+  if ($('loadWindW0')) $('loadWindW0').value = w0_kn;
+  
+  // Cập nhật label trong tab Tải trọng
+  const loadContent = document.getElementById('mod-load');
+  if (loadContent) {
+    const labels = loadContent.querySelectorAll('.section-label');
+    for (let label of labels) {
+      if (label.innerText.includes('Tải trọng gió')) {
+        label.innerHTML = `3. Tải trọng gió (w<sub>0</sub> = ${w0_kn} kN/m²)`;
+        break;
+      }
+    }
+  }
+  updateKFactor();
+}
+
+const K_TABLE = {
+  z: [2, 5, 10, 15, 20, 30, 40, 50, 60, 70, 80, 100],
+  A: [0.88, 1.00, 1.18, 1.28, 1.37, 1.51, 1.62, 1.70, 1.78, 1.84, 1.89, 1.98],
+  B: [0.76, 0.88, 1.00, 1.08, 1.15, 1.25, 1.32, 1.38, 1.43, 1.48, 1.53, 1.61],
+  C: [0.47, 0.60, 0.76, 0.86, 0.94, 1.05, 1.13, 1.20, 1.26, 1.31, 1.36, 1.45]
+};
+
+function updateKFactor() {
+  const h = parseFloat($('Htotal').value) || 10;
+  const terrain = $('terrainType').value || 'B';
+  const k = interpolate1D(h, K_TABLE.z, K_TABLE[terrain]);
+  if ($('loadWindK')) $('loadWindK').value = k.toFixed(2);
+}
+
+$('windZone').addEventListener('change', syncWindData);
+$('terrainType').addEventListener('change', syncWindData);
+
+// === Bảng III.3: Hệ số khí động Ce ===
+const CE_DATA = {
+  h_ratios: [0, 0.5, 1, 2], // h1/L
+  alpha_values: [0, 20, 40, 60],
+  ce1: [
+    [0, -0.6, -0.7, -0.8],      // alpha = 0
+    [0.2, -0.4, -0.7, -0.8],    // alpha = 20
+    [0.4, 0.3, -0.2, -0.4],     // alpha = 40
+    [0.8, 0.8, 0.8, 0.8]        // alpha = 60
+  ],
+  ce2: [-0.4, -0.4, -0.5, -0.8], // alpha <= 60 (Mái hút)
+  ce3_bl_le1: [-0.4, -0.4, -0.5, -0.6], // b/L <= 1
+  ce3_bl_ge2: [-0.5, -0.5, -0.6, -0.6]  // b/L >= 2
+};
+
+function interpolate1D(x, xArr, yArr) {
+  if (x <= xArr[0]) return yArr[0];
+  if (x >= xArr[xArr.length - 1]) return yArr[yArr.length - 1];
+  for (let i = 0; i < xArr.length - 1; i++) {
+    if (x >= xArr[i] && x <= xArr[i + 1]) {
+      const t = (x - xArr[i]) / (xArr[i + 1] - xArr[i]);
+      return yArr[i] + t * (yArr[i + 1] - yArr[i]);
+    }
+  }
+  return yArr[0];
+}
+
+function interpolate2D(x, y, xArr, yArr, zMatrix) {
+  // x: alpha, y: h1/L
+  const x_idx = xArr.findIndex((val, i) => x >= val && (i === xArr.length - 1 || x < xArr[i + 1]));
+  const y_idx = yArr.findIndex((val, i) => y >= val && (i === yArr.length - 1 || y < yArr[i + 1]));
+  
+  const i = Math.max(0, Math.min(x_idx, xArr.length - 2));
+  const j = Math.max(0, Math.min(y_idx, yArr.length - 2));
+
+  const x0 = xArr[i], x1 = xArr[i+1];
+  const y0 = yArr[j], y1 = yArr[j+1];
+  
+  const z00 = zMatrix[i][j];
+  const z01 = zMatrix[i][j+1];
+  const z10 = zMatrix[i+1][j];
+  const z11 = zMatrix[i+1][j+1];
+
+  const tx = (x - x0) / (x1 - x0);
+  const ty = (y - y0) / (y1 - y0);
+
+  const z0 = z00 + ty * (z01 - z00);
+  const z1 = z10 + ty * (z11 - z10);
+
+  return z0 + tx * (z1 - z0);
+}
+
+function updateAerodynamicCoefficients() {
+  const L = parseFloat($('spanL').value);
+  const b = parseFloat($('buildingLength').value);
+  const slope = parseFloat($('roofSlope').value);
+  const h1 = parseFloat($('Htotal').value); // h1 là chiều cao đến mái
+
+  if (!L || !b || isNaN(slope) || !h1) return;
+
+  // Tính alpha (độ)
+  const alpha = Math.atan(slope / 100) * 180 / Math.PI;
+  const h_ratio = h1 / L;
+  const bl_ratio = b / L;
+
+  // 1. Tính Ce1 (Mái đón)
+  const ce1 = interpolate2D(alpha, h_ratio, CE_DATA.alpha_values, CE_DATA.h_ratios, CE_DATA.ce1);
+  
+  // 2. Tính Ce2 (Mái hút)
+  const ce2 = interpolate1D(h_ratio, CE_DATA.h_ratios, CE_DATA.ce2);
+
+  // 3. Tính Ce3 (Cột hút/Leeward wall)
+  let ce3_arr = [];
+  if (bl_ratio <= 1) ce3_arr = CE_DATA.ce3_bl_le1;
+  else if (bl_ratio >= 2) ce3_arr = CE_DATA.ce3_bl_ge2;
+  else {
+    // Nội suy giữa b/L=1 và b/L=2
+    const t = (bl_ratio - 1) / (2 - 1);
+    ce3_arr = CE_DATA.ce3_bl_le1.map((val, idx) => val + t * (CE_DATA.ce3_bl_ge2[idx] - val));
+  }
+  const ce3 = interpolate1D(h_ratio, CE_DATA.h_ratios, ce3_arr);
+
+  // Cập nhật UI
+  $('ce_push').value = 0.8; // Thường là cố định
+  $('ce_roof1').value = ce1.toFixed(3);
+  $('ce_roof2').value = ce2.toFixed(3);
+  $('ce_pull').value = ce3.toFixed(3);
+
+  // Thông báo nhỏ
+  const btn = $('btnLookupCe');
+  const oldTxt = btn.innerText;
+  btn.innerText = '✅ Đã cập nhật từ Bảng III.3';
+  btn.style.background = 'rgba(52, 211, 153, 0.1)';
+  btn.style.color = '#059669';
+  btn.style.borderColor = '#059669';
+  setTimeout(() => {
+    btn.innerText = oldTxt;
+    btn.style.background = 'rgba(96,165,250,0.05)';
+    btn.style.color = 'var(--accent)';
+    btn.style.borderColor = 'var(--accent)';
+  }, 2000);
+}
 
 // === Bảng thông số cầu trục (theo sức nâng Q) ===
 const CRANE_DB = {
@@ -204,6 +342,9 @@ function updateFrameDimensions() {
   $('Htotal').value = H.toFixed(2);
   $('Hmm').value = Hmm.toFixed(2);
   $('Hdm').value = Hdm.toFixed(2);
+
+  // Sau khi cập nhật chiều cao, tính lại hệ số K
+  updateKFactor();
 }
 
 // Gắn event cho các input ảnh hưởng
@@ -211,7 +352,125 @@ function updateFrameDimensions() {
   $(id).addEventListener('input', updateFrameDimensions);
   $(id).addEventListener('change', updateFrameDimensions);
 });
+
+// Event cho nút tra bảng Ce
+if ($('btnLookupCe')) {
+  $('btnLookupCe').addEventListener('click', updateAerodynamicCoefficients);
+}
+
+// === Tự động hóa thiết kế tiết diện ===
+function getEta(af_aw, m, lb) {
+  // Bảng IV.5 - Tiết diện chữ I (Loại 5)
+  // Đơn giản hóa nội suy dựa trên Af/Aw
+  let eta_base = 0;
+  if (af_aw <= 0.25) {
+    eta_base = (1.45 - 0.05 * m) - 0.01 * (5 - m) * lb;
+  } else if (af_aw <= 0.5) {
+    const v1 = (1.45 - 0.05 * m) - 0.01 * (5 - m) * lb;
+    const v2 = (1.75 - 0.1 * m) - 0.02 * (5 - m) * lb;
+    const t = (af_aw - 0.25) / (0.5 - 0.25);
+    eta_base = v1 + t * (v2 - v1);
+  } else {
+    const v1 = (1.75 - 0.1 * m) - 0.02 * (5 - m) * lb;
+    const v2 = (1.90 - 0.1 * m) - 0.02 * (6 - m) * lb;
+    const t = Math.min(1, (af_aw - 0.5) / (1.0 - 0.5));
+    eta_base = v1 + t * (v2 - v1);
+  }
+  return Math.max(1, eta_base);
+}
+
+function updateAutoDesign() {
+  // Cập nhật cho Cột (Module Thiết Kế Tiết Diện)
+  const h = +$('sec_h').value, bf = +$('sec_bf').value, tw = +$('sec_tw').value, tf = +$('sec_tf').value;
+  const N = Math.abs(+$('designN').value);
+  const M = Math.abs(+$('designM').value);
+  const f = +$('fy').value;
+  const E = +$('E').value;
+  const L = (+$('Htotal').value) * 1000; // Chiều dài tính toán Lx (mm)
+  const Ly = (+$('lyVal').value) * 1000; // Chiều dài tính toán Ly (mm)
+
+  if (!h || !bf || !N || !f) return;
+
+  const p = getSectionProps(h, bf, tw, tf);
+  const m = (M * 1e6) / (N * 1e3 * (p.Wx / p.A));
+  const lb = (L / p.ix) * Math.sqrt(f / (E * 10)); // lb = lambda * sqrt(f/E) (đổi đơn vị E sang kN/cm2 -> MPa)
+  // Thực tế TCVN: lambda_bar = lambda * sqrt(f/E). E thép = 2.1e5 MPa. f = 210 MPa. 
+  const lambda_bar = (L / p.ix) * Math.sqrt(f / (E * 10)); 
+  const af_aw = (bf * tf * 2) / (p.hw * tw);
+
+  const eta = getEta(af_aw, Math.min(20, m), Math.min(5, lambda_bar));
+  const me = eta * m;
+
+  // Tra bảng
+  const phi_e = lookupPhiE(lambda_bar, me);
+  const phi_y = lookupPhiY(Ly / p.iy, f * 10);
+
+  $('calc_m').value = m.toFixed(2);
+  $('calc_lambda_bar').value = lambda_bar.toFixed(2);
+  $('calc_eta').value = eta.toFixed(2);
+  $('phi_e').value = phi_e.toFixed(3);
+  $('phi_y').value = phi_y.toFixed(3);
+}
+
+function updateAutoRafter() {
+  // Cập nhật cho Xà Ngang
+  const h = +$('raft_h').value, bf = +$('raft_bf').value, tw = +$('raft_tw').value, tf = +$('raft_tf').value;
+  const N = Math.abs(+$('raftN').value);
+  const M = Math.abs(+$('raftM').value);
+  const f = +$('fy').value;
+  const E = +$('E').value;
+  const Lx = (+$('raftLx').value) * 1000;
+  const Ly = (+$('raftLy').value) * 1000;
+
+  if (!h || !bf || !f) return;
+
+  const p = getSectionProps(h, bf, tw, tf);
+  const lambda_x = Lx / p.ix;
+  const phi_x = lookupPhiY(lambda_x, f * 10);
+  
+  const m = (M * 1e6) / (N * 1e3 * (p.Wx / p.A));
+  const lambda_bar = (Lx / p.ix) * Math.sqrt(f / (E * 10));
+  const af_aw = (bf * tf * 2) / (p.hw * tw);
+  const eta = getEta(af_aw, Math.min(20, m), Math.min(5, lambda_bar));
+  const me = eta * m;
+  
+  const phi_e = lookupPhiE(lambda_bar, me);
+
+  $('raft_phi').value = phi_x.toFixed(3);
+  $('raft_phi_e').value = phi_e.toFixed(3);
+}
+
+// Suggestion Logic
+$('btnSuggestCol').addEventListener('click', () => {
+  const H = +$('Htotal').value * 1000;
+  const h = Math.round(H / 20 / 10) * 10;
+  $('sec_h').value = h;
+  $('sec_bf').value = Math.round(h / 2.5 / 10) * 10;
+  $('sec_tw').value = 8;
+  $('sec_tf').value = 12;
+  updateAutoDesign();
+});
+
+$('btnSuggestRaft').addEventListener('click', () => {
+  const L = +$('spanL').value * 1000;
+  const h = Math.round(L / 30 / 10) * 10;
+  $('raft_h').value = h;
+  $('raft_bf').value = 200;
+  $('raft_tw').value = 8;
+  $('raft_tf').value = 12;
+  updateAutoRafter();
+});
+
+// Bind events
+['sec_h', 'sec_bf', 'sec_tw', 'sec_tf', 'designN', 'designM', 'lyVal'].forEach(id => {
+  $(id).addEventListener('input', updateAutoDesign);
+});
+['raft_h', 'raft_bf', 'raft_tw', 'raft_tf', 'raftN', 'raftM', 'raftLx', 'raftLy'].forEach(id => {
+  $(id).addEventListener('input', updateAutoRafter);
+});
+
 updateFrameDimensions(); // chạy lần đầu
+syncWindData(); // Đồng bộ dữ liệu gió lần đầu
 
 // === Module Toolbar Switching ===
 document.querySelectorAll('.mod-btn').forEach(btn => {
@@ -279,20 +538,23 @@ function drawSection() {
 ['H', 'B', 'tw', 'tf', 'sectionType'].forEach(id => { if ($(id)) $(id).addEventListener('input', drawSection); });
 drawSection();
 
-// === Section Properties ===
-function calcSectionProps() {
-  if (!$('H') || !$('B') || !$('tw') || !$('tf')) return null;
-  const H = +$('H').value, B = +$('B').value, tw = +$('tw').value, tf = +$('tf').value;
+// === Section Properties Helper ===
+function getSectionProps(H, B, tw, tf) {
   const hw = H - 2 * tf;
   const A = 2 * B * tf + hw * tw;
-  const Ix = (B * H * H * H - (B - tw) * hw * hw * hw) / 12;
+  const Ix = (B * Math.pow(H, 3) - (B - tw) * Math.pow(hw, 3)) / 12;
   const Wx = 2 * Ix / H;
-  const Sx = B * tf * (H - tf) / 2 + tw * hw * hw / 8;
+  const Sx = B * tf * (H - tf) / 2 + tw * Math.pow(hw, 2) / 8;
   const ix = Math.sqrt(Ix / A);
-  const Iy = (2 * tf * B * B * B + hw * tw * tw * tw) / 12;
+  const Iy = (2 * tf * Math.pow(B, 3) + hw * Math.pow(tw, 3)) / 12;
   const Wy = 2 * Iy / B;
   const iy = Math.sqrt(Iy / A);
   return { A, Ix, Wx, Sx, ix, Iy, Wy, iy, H, B, tw, tf, hw };
+}
+
+function calcSectionProps() {
+  if (!$('sec_h') || !$('sec_bf') || !$('sec_tw') || !$('sec_tf')) return null;
+  return getSectionProps(+$('sec_h').value, +$('sec_bf').value, +$('sec_tw').value, +$('sec_tf').value);
 }
 
 // === Render KaTeX ===

@@ -1,0 +1,49 @@
+﻿function reportRafterDesign() {
+  const fy = parseFloat(fy.value);
+  const fv = parseFloat(fv.value);
+  const gc = parseFloat(raft_gamma_c.value);
+
+  function getReportHTML(title, M, N, V, h_mm, bf_mm, tw_mm, tf_mm) {
+    const h_cm = h_mm / 10;
+    const bf_cm = bf_mm / 10;
+    const tw_cm = tw_mm / 10;
+    const tf_cm = tf_mm / 10;
+    const hw_cm = h_cm - 2 * tf_cm;
+    const absM = Math.abs(M);
+    const absN = Math.abs(N);
+    const absV = Math.abs(V);
+    
+    const A = 2 * bf_cm * tf_cm + hw_cm * tw_cm;
+    const Ix = (bf_cm * Math.pow(h_cm, 3) - (bf_cm - tw_cm) * Math.pow(hw_cm, 3)) / 12;
+    const Wx = 2 * Ix / h_cm;
+    const Sf = (bf_cm * tf_cm) * (h_cm - tf_cm) / 2;
+    
+    const sigma_x = absN / A + (absM * 100) / Wx;
+    const sigma_1 = (absM * 100 / Wx) * (hw_cm / h_cm);
+    const tau_1 = (absV * Sf) / (Ix * tw_cm);
+    const sigma_td = Math.sqrt(Math.pow(sigma_1, 2) + 3 * Math.pow(tau_1, 2));
+
+    const b0_tf = (0.5 * (bf_cm - tw_cm)) / tf_cm;
+    const hw_tw = hw_cm / tw_cm;
+
+    return \
+      <h4 style="color:var(--accent); margin-top:20px;">\</h4>
+      <p>+ Nội lực:  = \kNm; N = \kN; V = \kN$. Tiết diện: \x\x\x\$</p>
+      <div class="formula-center">
+        \\\\sigma = \\\\frac{N}{A} + \\\\frac{M}{W_x} = \ \\\\text{ kN/cm}^2 \\\\le f\\\\gamma_c = \ \\\\text{ kN/cm}^2
+      </div>
+      <div class="formula-center">
+        \\\\sigma_{td} = \\\\sqrt{\\\\sigma_1^2 + 3\\\\tau_1^2} = \ \\\\text{ kN/cm}^2 \\\\le 1,15 f\\\\gamma_c = \
+      </div>
+      <p>+ Ổn định cục bộ: /t_f = \; h_w/t_w = \$</p>
+      <p>$\\\\rightarrow$ Kết luận: Tiết diện \ **\**.</p>\;
+  }
+
+  const html = \
+    <h3>3.5.2. Kiểm tra tiết diện xà ngang</h3>
+    \
+    <div style="margin: 20px 0; border-top: 1px dashed #ccc;"></div>
+    \\;
+  
+  appendToReport(html, 'report-rafter');
+}
