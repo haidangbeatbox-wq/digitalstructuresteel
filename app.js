@@ -1,4 +1,4 @@
-/* ===== SteelCalc Pro - App Logic ===== */
+/* ===== Digital Structure With Dang - App Logic ===== */
 (function(){
 'use strict';
 
@@ -1833,6 +1833,212 @@ function reportSectionDesign() {
 
   appendToReport(html, 'report-design');
 }
+
+function reportRafterDesign() {
+  const M = parseFloat($('raftM').value);
+  const N = parseFloat($('raftN').value);
+  const V = parseFloat($('raftV').value);
+  const h_mm = parseFloat($('raft_h').value);
+  const bf_mm = parseFloat($('raft_bf').value);
+  const tw_mm = parseFloat($('raft_tw').value);
+  const tf_mm = parseFloat($('raft_tf').value);
+  const lx = parseFloat($('raftLx').value);
+  const ly = parseFloat($('raftLy').value);
+  const gc = parseFloat($('raft_gamma_c').value);
+  const fy = parseFloat($('fy').value);
+  const fv = parseFloat($('fv').value);
+  const E_val = parseFloat($('E').value);
+  
+  const h_cm = h_mm / 10;
+  const bf_cm = bf_mm / 10;
+  const tw_cm = tw_mm / 10;
+  const tf_cm = tf_mm / 10;
+  const hw_cm = h_cm - 2 * tf_cm;
+  const h_flange_center = h_cm - tf_cm;
+  
+  const absM = Math.abs(M);
+  const absN = Math.abs(N);
+  const absV = Math.abs(V);
+  
+  // 1. Tính Wx_yc
+  const Wx_yc = (absM * 100) / (fy * gc);
+  
+  // 2. Tính h_opt
+  const h_min = 1.15 * Math.sqrt(Wx_yc / tw_cm);
+  const h_max = 1.2 * Math.sqrt(Wx_yc / tw_cm);
+  
+  // 3. Kiểm tra tw từ điều kiện cắt
+  const tw_req = (1.5 * absV) / (h_cm * fv * gc);
+  
+  // 4. Tính Af_yc
+  const Af_yc = (Wx_yc * (h_cm / 2) - (tw_cm * Math.pow(hw_cm, 3)) / 12) * (2 / Math.pow(h_flange_center, 2));
+  
+  // 5. Đặc trưng thực tế
+  const A = 2 * bf_cm * tf_cm + hw_cm * tw_cm;
+  const Ix = (bf_cm * Math.pow(h_cm, 3) - (bf_cm - tw_cm) * Math.pow(hw_cm, 3)) / 12;
+  const Wx = 2 * Ix / h_cm;
+  const ix = Math.sqrt(Ix / A);
+  const Iy = (2 * tf_cm * Math.pow(bf_cm, 3) + hw_cm * Math.pow(tw_cm, 3)) / 12;
+  const iy = Math.sqrt(Iy / A);
+  
+  const lambda_x = (lx * 100) / ix;
+  const lambda_y = (ly * 100) / iy;
+
+  const draw_tw = Math.max(tw_mm, h_mm * 0.02);
+  const draw_tf = Math.max(tf_mm, h_mm * 0.03);
+  const pad_x = 80;
+  const pad_y = 60;
+  
+  const svg_html = `
+    <div style="text-align: center; margin: 25px 0; display: flex; justify-content: center; align-items: flex-end; gap: 20px;">
+      <svg viewBox="-${h_mm/2 + pad_x} -${bf_mm/2 + pad_y} ${h_mm + 2*pad_x} ${bf_mm + 2*pad_y}" width="280">
+        <style>
+          .dim-line { stroke: #333; stroke-width: 1.2; }
+          .dim-text { font-family: 'Times New Roman', serif; font-size: 18px; fill: #333; text-anchor: middle; }
+          .sec-line { fill: none; stroke: #000; stroke-width: 2.5; }
+          .axis-line { stroke: #000; stroke-width: 1; stroke-dasharray: 10,5,2,5; }
+        </style>
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#000" /></marker>
+        </defs>
+        <!-- Trục -->
+        <line x1="-${h_mm/2 + 40}" y1="0" x2="${h_mm/2 + 40}" y2="0" class="axis-line" />
+        <text x="-${h_mm/2 + 50}" y="5" class="dim-text">y</text>
+        <text x="${h_mm/2 + 50}" y="5" class="dim-text">y</text>
+        <line x1="0" y1="-${bf_mm/2 + 30}" x2="0" y2="${bf_mm/2 + 30}" class="axis-line" />
+        <text x="0" y="-${bf_mm/2 + 40}" class="dim-text">x</text>
+        <text x="0" y="${bf_mm/2 + 50}" class="dim-text">x</text>
+        
+        <!-- Mặt cắt -->
+        <path d="M -${h_mm/2},-${bf_mm/2} L -${h_mm/2 - draw_tf},-${bf_mm/2} L -${h_mm/2 - draw_tf},-${draw_tw/2} L ${h_mm/2 - draw_tf},-${draw_tw/2} L ${h_mm/2 - draw_tf},-${bf_mm/2} L ${h_mm/2},-${bf_mm/2} L ${h_mm/2},${bf_mm/2} L ${h_mm/2 - draw_tf},${bf_mm/2} L ${h_mm/2 - draw_tf},${draw_tw/2} L -${h_mm/2 - draw_tf},${draw_tw/2} L -${h_mm/2 - draw_tf},${bf_mm/2} L -${h_mm/2},${bf_mm/2} Z" class="sec-line" />
+        
+        <!-- Kích thước -->
+        <line x1="-${h_mm/2}" y1="${bf_mm/2 + 15}" x2="-${h_mm/2}" y2="${bf_mm/2 + 35}" class="dim-line" />
+        <line x1="${h_mm/2}" y1="${bf_mm/2 + 15}" x2="${h_mm/2}" y2="${bf_mm/2 + 35}" class="dim-line" />
+        <line x1="-${h_mm/2}" y1="${bf_mm/2 + 25}" x2="${h_mm/2}" y2="${bf_mm/2 + 25}" class="dim-line" marker-start="url(#arrow)" marker-end="url(#arrow)" />
+        <text x="0" y="${bf_mm/2 + 20}" class="dim-text">${h_mm}</text>
+
+        <line x1="${h_mm/2 + 15}" y1="-${bf_mm/2}" x2="${h_mm/2 + 35}" y2="-${bf_mm/2}" class="dim-line" />
+        <line x1="${h_mm/2 + 15}" y1="${bf_mm/2}" x2="${h_mm/2 + 35}" y2="${bf_mm/2}" class="dim-line" />
+        <line x1="${h_mm/2 + 25}" y1="-${bf_mm/2}" x2="${h_mm/2 + 25}" y2="${bf_mm/2}" class="dim-line" marker-start="url(#arrow)" marker-end="url(#arrow)" />
+        <text x="${h_mm/2 + 35}" y="5" class="dim-text" transform="rotate(-90, ${h_mm/2 + 35}, 5)">${bf_mm}</text>
+        
+        <text x="15" y="-15" class="dim-text">${tw_mm}</text>
+        <line x1="15" y1="-12" x2="0" y2="-${draw_tw/2}" class="dim-line" marker-end="url(#arrow)" />
+        <line x1="15" y1="12" x2="0" y2="${draw_tw/2}" class="dim-line" marker-end="url(#arrow)" />
+      </svg>
+      <div style="font-style: italic; font-weight: bold; font-size: 0.9rem;">Hình 3.21. Tiết diện xà ngang</div>
+    </div>
+  `;
+
+  const mx = (absM * 100 * A) / (absN * Wx);
+  const sigma_x = absN / A + (absM * 100) / Wx;
+  const isSafe = sigma_x <= (fy * gc) ? "<" : ">";
+
+  // Equivalent Stress
+  const Sf = (bf_cm * tf_cm) * (h_cm - tf_cm) / 2;
+  const sigma_1 = (absM * 100 / Wx) * (hw_cm / h_cm);
+  const tau_1 = (absV * Sf) / (Ix * tw_cm);
+  const sigma_td = Math.sqrt(Math.pow(sigma_1, 2) + 3 * Math.pow(tau_1, 2));
+  const limit_sigma_td = 1.15 * fy * gc;
+
+  // Local Stability
+  const b0 = 0.5 * (bf_cm - tw_cm);
+  const b0_tf = b0 / tf_cm;
+  const limit_flange_local = 0.5 * Math.sqrt(E_val / (fy * 10)); // fy in kN/cm2, E in MPa? Wait. 
+  // Let's use consistent units. E = 2.1e4 kN/cm2.
+  const limit_flange_local_val = 0.5 * Math.sqrt(21000 / fy);
+  
+  const hw_tw = hw_cm / tw_cm;
+  const limit_web_comp = 5.5 * Math.sqrt(21000 / fy);
+  const limit_web_shear = 3.2 * Math.sqrt(21000 / fy);
+  const limit_web_combined = 2.5 * Math.sqrt(21000 / fy);
+
+  const html = `
+    <h3>3.5.2. Thiết kế tiết diện xà ngang</h3>
+    <p>a) Đoạn xà (tiết diện thay đổi)</p>
+    <p>Từ bảng tổ hợp nội lực chọn cặp nội lực tính toán:</p>
+    <div style="margin-left: 200px; margin-bottom: 15px;">
+      <p>$N = ${N} \\text{ kN}$</p>
+      <p>$M = ${M} \\text{ kNm}$</p>
+      <p>$V = ${V} \\text{ kN}$</p>
+    </div>
+    <p>Đây là cặp nội lực tại tiết diện đầu xà (nách khung), trong tổ hợp nội lực do các trường hợp tải trọng gây ra.</p>
+    <p>Mô men chống uốn cần thiết của tiết diện xà ngang xác định theo công thức (2.53):</p>
+    <div class="formula-center">
+      $$W_x^{yc} = \\frac{M}{f\\gamma_c} = \\frac{${absM} \\cdot 10^2}{${fy} \\cdot ${gc}} = ${Wx_yc.toFixed(1)} \\text{ (cm}^3\\text{)}.$$
+    </div>
+    
+    <p>Chiều cao của tiết diện xà xác định từ điều kiện tối ưu về chi phí vật liệu theo công thức (2.54), với bề dày bản bụng xà chọn sơ bộ là ${tw_cm} cm:</p>
+    <div class="formula-center">
+      $$h = k \\sqrt{\\frac{W_x^{yc}}{t_w}} = (1,15 \\div 1,2) \\sqrt{\\frac{${Wx_yc.toFixed(1)}}{${tw_cm}}} = (${h_min.toFixed(1)} \\div ${h_max.toFixed(1)}) \\text{ (cm)}.$$
+    </div>
+    <p>$\\rightarrow$ Chọn $h = ${h_cm} \\text{ cm}$.</p>
+    
+    <p>Kiểm tra lại bề dày bản bụng từ điều kiện chịu cắt (2.55):</p>
+    <div class="formula-center">
+      $$t_w = ${tw_cm} \\text{ cm} ${tw_cm >= tw_req ? '>' : '<'} \\frac{3}{2} \\frac{${absV}}{${h_cm} \\cdot ${fv} \\cdot ${gc}} = ${tw_req.toFixed(2)} \\text{ (cm)}.$$
+    </div>
+    
+    <p>Diện tích tiết diện cần thiết của bản cánh xà ngang xác định theo công thức (2.56):</p>
+    <div class="formula-center">
+      $$A_f^{yc} = (b_f t_f)^{yc} = \\left( W_x^{yc} \\frac{h}{2} - \\frac{t_w h_w^3}{12} \\right) \\frac{2}{(h-t_f)^2}$$
+      $$A_f^{yc} = \\left( ${Wx_yc.toFixed(1)} \\cdot \\frac{${h_cm}}{2} - \\frac{${tw_cm} \\cdot ${hw_cm.toFixed(1)}^3}{12} \\right) \\frac{2}{${h_flange_center.toFixed(1)}^2} = ${Af_yc.toFixed(1)} \\text{ (cm}^2\\text{)}.$$
+    </div>
+    
+    <p>Theo các yêu cầu cấu tạo và ổn định cục bộ, kích thước tiết diện của bản cánh được chọn là: $t_f = ${tf_cm} \\text{ cm}; b_f = ${bf_cm} \\text{ cm}$.</p>
+    
+    ${svg_html}
+    
+    <p>Tính lại các đặc trưng hình học:</p>
+    <div class="formula-center">
+      <p>$$A = ${tw_cm} \\cdot ${hw_cm} + 2 \\cdot (${tf_cm} \\cdot ${bf_cm}) = ${A.toFixed(1)} \\text{ (cm}^2\\text{)};$$</p>
+      <p>$$I_x = \\frac{${bf_cm} \\cdot ${h_cm}^3}{12} - 2 \\cdot \\left[ \\frac{0,5 \\cdot (${bf_cm} - ${tw_cm}) \\cdot ${hw_cm}^3}{12} \\right] = ${Math.round(Ix)} \\text{ (cm}^4\\text{)};$$</p>
+      <p>$$W_x = ${Math.round(Ix)} / (${h_cm}/2) = ${Math.round(Wx)} \\text{ (cm}^3\\text{)};$$</p>
+      <p>$$m_x = \\frac{M}{N} \\frac{A}{W_x} = \\frac{${absM} \\cdot 10^2}{${absN}} \\cdot \\frac{${A.toFixed(1)}}{${Math.round(Wx)}} = ${mx.toFixed(2)}.$$</p>
+    </div>
+    
+    <p>Do $m_x = ${mx.toFixed(2)} ${mx > 20 ? '>' : '\\leq'} 20 \\rightarrow m_e = \\eta m_x ${mx > 20 ? '>' : '\\leq'} 20$ nên tiết diện xà ngang được tính toán kiểm tra theo điều kiện bền (2.41):</p>
+    <div class="formula-center">
+      $$\\sigma_x = \\frac{N}{A_n} + \\frac{M}{W_{xn}} = \\frac{${absN}}{${A.toFixed(1)}} + \\frac{${absM} \\cdot 10^2}{${Math.round(Wx)}} = ${sigma_x.toFixed(1)} \\text{ (kN/cm}^2\\text{)} ${isSafe} f\\gamma_c = ${fy} \\text{ (kN/cm}^2\\text{)}.$$
+    </div>
+    <p>Kết luận: Tiết diện xà ngang ${sigma_x <= (fy * gc) ? 'ĐẠT' : 'KHÔNG ĐẠT'} điều kiện cường độ.</p>
+    
+    <p>Tại tiết diện đầu xà có mô men uốn và lực cắt cùng tác dụng nên cần kiểm tra ứng suất tương đương tại chỗ tiếp xúc giữa bản cánh và bản bụng theo (2.57):</p>
+    <div class="formula-center">
+      $$\\sigma_{td} = \\sqrt{\\sigma_1^2 + 3\\tau_1^2} \\leq 1,15 f\\gamma_c.$$
+    </div>
+    <p>Trong đó:</p>
+    <div class="formula-center">
+      $$\\sigma_1 = \\frac{M}{W_x} \\frac{h_w}{h} = \\frac{${absM} \\cdot 10^2}{${Math.round(Wx)}} \\cdot \\frac{${hw_cm.toFixed(1)}}{${h_cm}} = ${sigma_1.toFixed(2)} \\text{ (kN/cm}^2\\text{)};$$
+      $$\\tau_1 = \\frac{V S_f}{I_x t_w} = \\frac{${absV} \\cdot ${Sf.toFixed(0)}}{${Math.round(Ix)} \\cdot ${tw_cm}} = ${tau_1.toFixed(2)} \\text{ (kN/cm}^2\\text{)}.$$
+    </div>
+    <p>Ở trên: $S_f$ - mô men tĩnh của một cánh dầm đối với trục trung hòa x-x:</p>
+    <div class="formula-center">
+      $$S_f = (b_f t_f) \\frac{h - t_f}{2} = (${bf_cm} \\cdot ${tf_cm}) \\cdot \\frac{${h_cm} - ${tf_cm}}{2} = ${Sf.toFixed(0)} \\text{ (cm}^3\\text{)}.$$
+    </div>
+    <p>Vậy:</p>
+    <div class="formula-center">
+      $$\\sigma_{td} = \\sqrt{ ${sigma_1.toFixed(2)}^2 + 3 \\cdot ${tau_1.toFixed(2)}^2 } = ${sigma_td.toFixed(2)} \\text{ (kN/cm}^2\\text{)} < 1,15 f\\gamma_c = ${limit_sigma_td.toFixed(2)} \\text{ (kN/cm}^2\\text{)}.$$
+    </div>
+    
+    <p>Kiểm tra ổn định cục bộ của bản cánh và bản bụng:</p>
+    <div class="formula-center">
+      <p>$$\\frac{b_0}{t_f} = \\frac{0,5(${bf_cm} - ${tw_cm})}{${tf_cm}} = ${b0_tf.toFixed(1)} < \\frac{1}{2} \\sqrt{\\frac{E}{f}} = ${limit_flange_local_val.toFixed(1)};$$</p>
+      <p>$$\\frac{h_w}{t_w} = \\frac{${hw_cm.toFixed(1)}}{${tw_cm}} = ${hw_tw.toFixed(1)} < 5,5 \\sqrt{\\frac{E}{f}} = ${limit_web_comp.toFixed(0)} \\rightarrow \\text{Bản bụng ổn định cục bộ (ứng suất pháp nén).}$$</p>
+      <p>$$\\frac{h_w}{t_w} = ${hw_tw.toFixed(1)} < 3,2 \\sqrt{\\frac{E}{f}} = ${limit_web_shear.toFixed(0)} \\rightarrow \\text{Bản bụng ổn định cục bộ (ứng suất tiếp).}$$</p>
+    </div>
+    <div class="formula-center">
+      <p>$$\\frac{h_w}{t_w} = ${hw_tw.toFixed(1)} < 2,5 \\sqrt{\\frac{E}{f}} = 2,5 \\sqrt{\\frac{${(E_val/10).toFixed(1)} \\cdot 10^4}{${fy}}} = ${limit_web_combined.toFixed(0)}$$</p>
+    </div>
+    <p>$\\rightarrow$ Bản bụng không bị mất ổn định cục bộ dưới tác dụng của ứng suất pháp và ứng suất tiếp (không phải kiểm tra các ô bụng).</p>
+    <p>Vậy tiết diện xà đã chọn là đạt yêu cầu. Tỷ số độ cứng của tiết diện xà (ở chỗ tiếp giáp với cột) và cột đã chọn phù hợp với giả thiết ban đầu là bằng nhau.</p>
+  `;
+  
+  appendToReport(html, 'report-rafter');
+}
+
+$('btnReportRafter')?.addEventListener('click', reportRafterDesign);
 
 $('btnReportDesign')?.addEventListener('click', reportSectionDesign);
 

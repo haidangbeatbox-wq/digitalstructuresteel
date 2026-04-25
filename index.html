@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SteelCalc Pro - Tính Toán Kết Cấu Thép</title>
+<title>Digital Structure With Dang - Tính Toán Kết Cấu Thép</title>
 <meta name="description" content="Ứng dụng tính toán kết cấu thép chuyên nghiệp theo TCVN">
 <link rel="stylesheet" href="style.css">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -25,7 +25,7 @@
         <defs><linearGradient id="g1" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#60a5fa"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
         <linearGradient id="g2" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#f472b6"/><stop offset="1" stop-color="#fb923c"/></linearGradient></defs>
       </svg>
-      <span>SteelCalc <small>Pro</small></span>
+      <span>Digital Structure <small>With Dang</small></span>
     </div>
   </div>
   <ul class="nav-list">
@@ -67,6 +67,7 @@
       <button class="mod-btn" data-mod="mod-frame">📚 Bảng Tra Hệ Thống</button>
       <button class="mod-btn" data-mod="mod-load">⚖️ Tải Trọng</button>
       <button class="mod-btn" data-mod="mod-design">📐 Thiết Kế Tiết Diện</button>
+      <button class="mod-btn" data-mod="mod-rafter">🏗️ Thiết Kế Xà Ngang</button>
     </div>
 
     <!-- ===== Module: Thông Số Đầu Vào ===== -->
@@ -423,6 +424,44 @@
             </div>
           </div>
           <button class="btn-report" id="btnReportDesign" type="button">📝 Thêm vào thuyết minh</button>
+        </div>
+      </div>
+    </div>
+    <!-- ===== Module: Thiết Kế Xà Ngang ===== -->
+    <div class="mod-content" id="mod-rafter">
+      <div class="dashboard-layout">
+        <div class="dash-left">
+          <div class="panel">
+            <div class="panel-head"><h2>🏗️ Thông Số Thiết Kế Xà Ngang</h2></div>
+            <div class="panel-body">
+              <div class="section-label">1. Nội lực thiết kế (Tiết diện nách khung)</div>
+              <div class="form-row form-row-3">
+                <div class="form-group"><label>Mô men M (kNm)</label><input type="number" id="raftM" value="-385.2" step="1"></div>
+                <div class="form-group"><label>Lực dọc N (kN)</label><input type="number" id="raftN" value="-85.6" step="1"></div>
+                <div class="form-group"><label>Lực cắt V (kN)</label><input type="number" id="raftV" value="64.2" step="1"></div>
+              </div>
+              <div class="divider"></div>
+              <div class="section-label">2. Tiết diện xà ngang giả thiết (mm)</div>
+              <div class="form-row form-row-4">
+                <div class="form-group"><label>Chiều cao h</label><input type="number" id="raft_h" value="750" step="10"></div>
+                <div class="form-group"><label>Bề rộng cánh b<sub>f</sub></label><input type="number" id="raft_bf" value="200" step="10"></div>
+                <div class="form-group"><label>Dày bản bụng t<sub>w</sub></label><input type="number" id="raft_tw" value="8" step="1"></div>
+                <div class="form-group"><label>Dày bản cánh t<sub>f</sub></label><input type="number" id="raft_tf" value="12" step="1"></div>
+              </div>
+              <div class="divider"></div>
+              <div class="section-label">3. Các hệ số ổn định & điều kiện biên</div>
+              <div class="form-row form-row-3">
+                <div class="form-group"><label>Chiều dài tính toán l<sub>x</sub> (m)</label><input type="number" id="raftLx" value="12.5" step="0.5"></div>
+                <div class="form-group"><label>Khoảng cách xà gồ l<sub>y</sub> (m)</label><input type="number" id="raftLy" value="1.5" step="0.1"></div>
+                <div class="form-group"><label>Hệ số làm việc γ<sub>c</sub></label><input type="number" id="raft_gamma_c" value="1.0" step="0.05"></div>
+              </div>
+              <div class="form-row form-row-2">
+                <div class="form-group"><label>Hệ số φ (Uốn dọc)</label><input type="number" id="raft_phi" value="0.95" step="0.001"></div>
+                <div class="form-group"><label>Hệ số φ<sub>e</sub> (Lệch tâm)</label><input type="number" id="raft_phi_e" value="0.85" step="0.001"></div>
+              </div>
+            </div>
+          </div>
+          <button class="btn-report" id="btnReportRafter" type="button">📝 Thêm vào thuyết minh</button>
         </div>
       </div>
     </div>
