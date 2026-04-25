@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SteelCalc Pro - Tính Toán Kết Cấu Thép</title>
+<meta name="description" content="Ứng dụng tính toán kết cấu thép chuyên nghiệp theo TCVN">
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+</head>
+<body>
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-header">
+    <div class="logo">
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+        <rect x="2" y="4" width="28" height="4" rx="1" fill="url(#g1)"/>
+        <rect x="8" y="8" width="4" height="16" rx="1" fill="url(#g1)"/>
+        <rect x="20" y="8" width="4" height="16" rx="1" fill="url(#g1)"/>
+        <rect x="2" y="24" width="28" height="4" rx="1" fill="url(#g1)"/>
+        <rect x="12" y="14" width="8" height="4" rx="1" fill="url(#g2)"/>
+        <defs><linearGradient id="g1" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#60a5fa"/><stop offset="1" stop-color="#a78bfa"/></linearGradient>
+        <linearGradient id="g2" x1="0" y1="0" x2="32" y2="32"><stop stop-color="#f472b6"/><stop offset="1" stop-color="#fb923c"/></linearGradient></defs>
+      </svg>
+      <span>SteelCalc <small>Pro</small></span>
+    </div>
+  </div>
+  <ul class="nav-list">
+    <li class="nav-item active" data-tab="dashboard" id="nav-dashboard">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>Bảng Điều Khiển</span>
+    </li>
+    <li class="nav-item" data-tab="report" id="nav-report">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span>Thuyết Minh</span>
+    </li>
+  </ul>
+  <div class="sidebar-footer">
+    <span>v1.0 &middot; TCVN 5575:2012</span>
+  </div>
+</nav>
+
+<!-- Main -->
+<main class="main" id="main">
+  <!-- Header -->
+  <header class="topbar">
+    <button class="menu-btn" id="menuBtn" aria-label="Menu">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <h1 id="pageTitle">Bảng Điều Khiển</h1>
+    <div class="topbar-actions">
+      <button class="btn-icon" id="btnCalc" title="Tính toán">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Tab: Dashboard -->
+  <section class="tab-content active" id="tab-dashboard">
+
+    <!-- ===== MODULE TOOLBAR ===== -->
+    <div class="module-bar">
+      <button class="mod-btn active" data-mod="mod-input">📋 Thông Số Đầu Vào</button>
+      <button class="mod-btn" data-mod="mod-frame">📚 Bảng Tra Hệ Thống</button>
+      <button class="mod-btn" data-mod="mod-load">⚖️ Tải Trọng</button>
+      <button class="mod-btn" data-mod="mod-design">📐 Thiết Kế Tiết Diện</button>
+    </div>
+
+    <!-- ===== Module: Thông Số Đầu Vào ===== -->
+    <div class="mod-content active" id="mod-input">
+      <div class="dashboard-layout">
+        <div class="dash-left">
+          <div class="panel">
+            <div class="panel-body">
+              <div class="section-label">1. Thông số hình học</div>
+              <div class="form-row form-row-3">
+                <div class="form-group"><label>Nhịp khung L (m)</label><input type="number" id="spanL" value="24" step="0.5"></div>
+                <div class="form-group"><label>Bước khung B (m)</label><input type="number" id="stepB" value="6" step="0.5"></div>
+                <div class="form-group"><label>Chiều dài nhà (m)</label><input type="number" id="buildingLength" value="90"></div>
+              </div>
+              <div class="form-row form-row-3">
+                <div class="form-group"><label>Độ dốc mái i (%)</label><input type="number" id="roofSlope" value="10" step="1"></div>
+                <div class="form-group"><label>Cao trình đỉnh ray (m)</label><input type="number" id="craneRailElev" value="7.0" step="0.1"></div>
+                <div class="form-group"><label>Số khung</label><input type="number" id="numFrames" value="16" readonly></div>
+              </div>
+              <div class="divider"></div>
+              <div class="section-label">2. Thông số cầu trục</div>
+              <div class="form-row form-row-3">
+                <div class="form-group">
+                  <label>Sức nâng Q (tấn)</label>
+                  <select id="craneCapacity">
+                    <option value="5">5T</option>
+                    <option value="6.3">6.3T</option>
+                    <option value="8">8T</option>
+                    <option value="10" selected>10T</option>
+                    <option value="12.5">12.5T</option>
+                    <option value="16">16T</option>
+                    <option value="20">20T</option>
+                    <option value="25">25T</option>
+                    <option value="32">32T</option>
+                  </select>
+                </div>
+                <div class="form-group"><label>Số lượng</label><select id="craneCount"><option value="1">1 cầu trục</option><option value="2" selected>2 cầu trục</option></select></div>
+                <div class="form-group"><label>Chế độ làm việc</label><select id="craneMode"><option value="light">Nhẹ</option><option value="medium" selected>Trung bình</option><option value="heavy">Nặng</option><option value="very_heavy">Rất nặng</option></select></div>
+              </div>
+              <div class="divider"></div>
+              <div class="section-label">3. Điều kiện tự nhiên</div>
+              <div class="form-row form-row-4">
+                <div class="form-group"><label>Địa điểm</label><select id="location"><option value="hanoi" selected>Hà Nội</option><option value="hcm">TP.HCM</option><option value="danang">Đà Nẵng</option><option value="haiphong">Hải Phòng</option><option value="hue">Huế</option><option value="other">Khác</option></select></div>
+                <div class="form-group"><label>Vùng gió</label><select id="windZone"><option value="I">I</option><option value="II" selected>II</option><option value="III">III</option><option value="IV">IV</option><option value="V">V</option></select></div>
+                <div class="form-group"><label>Địa hình</label><select id="terrainType"><option value="A">A</option><option value="B" selected>B</option><option value="C">C</option></select></div>
+                <div class="form-group"><label>W₀ (daN/m²)</label><input type="number" id="W0" value="83" readonly></div>
+              </div>
+              <div class="divider"></div>
+              <div class="section-label">4. Đặc tính vật liệu</div>
+              <div class="form-row form-row-4">
+                <div class="form-group"><label>Mác thép</label><select id="steelGrade"><option value="CCT34" selected>CCT34s</option><option value="CCT38">CCT38s</option><option value="CCT42">CCT42s</option><option value="09Mn2">09Mn2</option></select></div>
+                <div class="form-group"><label>f (kN/cm²)</label><input type="number" id="fy" value="21" readonly></div>
+                <div class="form-group"><label>f<sub>v</sub> (kN/cm²)</label><input type="number" id="fv" value="12" readonly></div>
+                <div class="form-group"><label>f<sub>c</sub> (kN/cm²)</label><input type="number" id="fc" value="32" readonly></div>
+              </div>
+              <div class="form-row form-row-4">
+                <div class="form-group"><label>E (kN/cm²)</label><input type="number" id="E" value="21000" readonly></div>
+                <div class="form-group"><label>Hàn</label><select id="weldMethod"><option value="manual" selected>Hàn tay</option><option value="semi_auto">Bán tự động</option><option value="auto">Tự động</option></select></div>
+                <div class="form-group"><label>Que hàn</label><select id="weldRod"><option value="N42" selected>N42</option><option value="N46">N46</option><option value="N50">N50</option></select></div>
+                <div class="form-group"><label>γ<sub>c</sub></label><input type="number" id="gammaC" value="1.0" step="0.05"></div>
+              </div>
+            </div>
+          </div>
+          <button class="btn-report" id="btnReportInput" type="button">📝 Thêm vào thuyết minh</button>
+          <button class="btn-calc" id="btnCalcMain" type="button">⚡ TÍNH TOÁN</button>
+        </div>
+        <div class="dash-right">
+          <div class="stats-row-mini">
+            <div class="stat-mini" style="--accent:#60a5fa"><span class="stat-val" id="statMembers">0</span><span>Cấu kiện</span></div>
+            <div class="stat-mini" style="--accent:#34d399"><span class="stat-val" id="statPass">0</span><span>Đạt</span></div>
+            <div class="stat-mini" style="--accent:#f87171"><span class="stat-val" id="statFail">0</span><span>Không đạt</span></div>
+            <div class="stat-mini" style="--accent:#fbbf24"><span class="stat-val" id="statWarn">0</span><span>Cảnh báo</span></div>
+          </div>
+          <div class="panel panel-result">
+            <div class="panel-head"><h2>📊 Kết Quả</h2></div>
+            <div class="panel-body" id="resultPanel">
+              <div class="empty-state">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".4"><polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/></svg>
+                <p>Nhấn <strong>TÍNH TOÁN</strong> để xem kết quả</p>
+              </div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h2>🔍 Mặt Cắt Tiết Diện</h2></div>
+            <div class="panel-body canvas-wrap"><canvas id="sectionCanvas" width="320" height="260"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Module: Bảng Tra & Kích Thước ===== -->
+    <div class="mod-content" id="mod-frame">
+      <div class="dashboard-layout">
+        <div class="dash-left">
+          <div class="panel">
+            <div class="panel-head"><h2>📚 Bảng Tra Cầu Trục (Tham Khảo)</h2></div>
+            <div class="panel-body">
+              <div style="display: flex; gap: 15px; margin-bottom: 15px; background: #f8fafc; padding: 10px; border-radius: 8px;">
+                <div class="form-group" style="margin:0">
+                  <label>Chọn Sức nâng Q (tấn)</label>
+                  <select id="craneQ_Input" style="padding: 5px; border-radius: 4px; border: 1px solid #cbd5e1;">
+                    <option value="5">5 Tấn</option>
+                    <option value="6.3">6.3 Tấn</option>
+                    <option value="8">8 Tấn</option>
+                    <option value="10" selected>10 Tấn</option>
+                    <option value="12.5">12.5 Tấn</option>
+                    <option value="16">16 Tấn</option>
+                    <option value="20">20 Tấn</option>
+                    <option value="25">25 Tấn</option>
+                    <option value="32">32 Tấn</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin:0">
+                  <label>Chọn Nhịp L<sub>k</sub> (m)</label>
+                  <select id="Lk_Input" style="padding: 5px; border-radius: 4px; border: 1px solid #cbd5e1;">
+                    <option value="16.5">16.5 m</option>
+                    <option value="19.5">19.5 m</option>
+                    <option value="22.5" selected>22.5 m</option>
+                    <option value="25.5">25.5 m</option>
+                    <option value="28">28 m</option>
+                    <option value="31">31 m</option>
+                    <option value="34">34 m</option>
+                  </select>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table class="lookup-table">
+                  <thead>
+                    <tr><th>Q (T)</th><th>L<sub>k</sub> (m)</th><th>H<sub>k</sub> (mm)</th><th>Z<sub>min</sub></th><th>B<sub>k</sub></th><th>K<sub>k</sub></th><th>P<sub>max</sub></th><th>P<sub>min</sub></th></tr>
+                  </thead>
+                  <tbody id="craneLookupBody">
+                    <!-- Dữ liệu sẽ được render từ JS -->
+                  </tbody>
+                </table>
+              </div>
+              <p style="font-size: 0.8rem; color: var(--text2); margin-top: 10px; font-style: italic;">
+                * Dữ liệu tra từ Catalo thiết bị nâng (Bảng II.3 Phụ lục). Bạn có thể chọn Sức nâng Q ở module Đầu Vào để cập nhật bảng tính.
+              </p>
+            </div>
+          </div>
+          <div class="panel" style="margin-top: 20px;">
+            <div class="panel-head"><h2>📚 Bảng IV.5: Hệ số ảnh hưởng của hình dạng tiết diện (η)</h2></div>
+            <div class="panel-body">
+              <div class="table-wrap">
+                <table class="lookup-table">
+                  <thead>
+                    <tr>
+                      <th rowspan="2">Loại</th>
+                      <th rowspan="2">A<sub>f</sub> / A<sub>w</sub></th>
+                      <th colspan="2">0 ≤ λ&#772; ≤ 5</th>
+                      <th colspan="2">λ&#772; > 5</th>
+                    </tr>
+                    <tr>
+                      <th>0,1 ≤ m ≤ 5</th>
+                      <th>5 < m ≤ 20</th>
+                      <th>0,1 ≤ m ≤ 5</th>
+                      <th>5 < m ≤ 20</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td rowspan="3" style="text-align: center; vertical-align: middle;"><strong>5</strong><br>(Chữ I)</td>
+                      <td>0,25</td>
+                      <td>(1,45 - 0,05m) - 0,01(5 - m)λ&#772;</td>
+                      <td>1,2</td>
+                      <td colspan="2">1,2</td>
+                    </tr>
+                    <tr>
+                      <td>0,5</td>
+                      <td>(1,75 - 0,1m) - 0,02(5 - m)λ&#772;</td>
+                      <td>1,25</td>
+                      <td colspan="2">1,25</td>
+                    </tr>
+                    <tr>
+                      <td>≥ 1</td>
+                      <td>(1,90 - 0,1m) - 0,02(6 - m)λ&#772;</td>
+                      <td>1,4 - 0,02λ&#772;</td>
+                      <td colspan="2">1,3</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p style="font-size: 0.8rem; color: var(--text2); margin-top: 10px; font-style: italic;">
+                * Trích Bảng IV.5 - TCVN 5575:2012. Áp dụng cho tiết diện chữ I (loại 5) uốn trong mặt phẳng có độ cứng lớn nhất. Hệ thống tự động giới hạn m ≤ 5 và λ&#772; ≤ 5 khi áp dụng công thức tương ứng.
+              </p>
+            </div>
+          </div>
+          <div class="panel" style="margin-top: 20px;">
+            <div class="panel-head"><h2>📚 Bảng IV.3: Hệ số φ<sub>e</sub> khi kiểm tra ổn định nén lệch tâm</h2></div>
+            <div class="panel-body">
+              <div class="table-wrap" style="max-height: 400px; overflow-y: auto; overflow-x: auto;">
+                <table class="lookup-table" id="phiETable">
+                  <!-- Dữ liệu bảng IV.3 sẽ được render tự động bằng JS -->
+                </table>
+              </div>
+              <p style="font-size: 0.8rem; color: var(--text2); margin-top: 10px; font-style: italic;">
+                * Bảng tra nội suy song tuyến tính tự động từ ma trận dữ liệu chuẩn TCVN 5575.
+              </p>
+            </div>
+          </div>
+          <div class="panel" style="margin-top: 20px;">
+            <div class="panel-head"><h2>📚 Bảng IV.2: Hệ số uốn dọc φ của cấu kiện chịu nén đúng tâm</h2></div>
+            <div class="panel-body">
+              <div class="table-wrap" style="max-height: 400px; overflow-y: auto; overflow-x: auto;">
+                <table class="lookup-table" id="phiYTable">
+                  <!-- Dữ liệu bảng IV.2 sẽ được render tự động bằng JS -->
+                </table>
+              </div>
+              <p style="font-size: 0.8rem; color: var(--text2); margin-top: 10px; font-style: italic;">
+                * Bảng tra nội suy song tuyến tính tự động (Phiên bản đã fix các lỗi in ấn của sách).
+              </p>
+            </div>
+          </div>
+          <div class="panel" style="margin-top: 20px;">
+            <div class="panel-head"><h2>📏 Kết Quả Kích Thước Khung</h2></div>
+            <div class="panel-body">
+              <div class="section-label">Chiều cao cột</div>
+          <div class="form-row form-row-4">
+            <div class="form-group"><label>H<sub>dr</sub> – Đỉnh ray (m)</label><input type="number" id="Hdr" value="7.0" readonly></div>
+            <div class="form-group"><label>H<sub>1</sub> – Cột dưới (m)</label><input type="number" id="H1col" value="8.15" readonly></div>
+            <div class="form-group"><label>H<sub>2</sub> – Cột trên (m)</label><input type="number" id="H2col" value="3.05" readonly></div>
+            <div class="form-group"><label>H – Tổng cột (m)</label><input type="number" id="Htotal" value="11.2" readonly></div>
+          </div>
+          <div class="divider"></div>
+          <div class="section-label">Chiều cao khung</div>
+          <div class="form-row form-row-3">
+            <div class="form-group"><label>H<sub>đm</sub> – Đỉnh mái (m)</label><input type="number" id="Hdm" value="12.4" readonly></div>
+            <div class="form-group"><label>H<sub>mm</sub> – Mái tại đỉnh (m)</label><input type="number" id="Hmm" value="1.2" readonly></div>
+            <div class="form-group"><label>a – Trục cột đến mép (m)</label><input type="number" id="aCol" value="0.5" step="0.05"></div>
+          </div>
+          <div class="divider"></div>
+          <div class="section-label">Kích thước cầu trục</div>
+          <div class="form-row form-row-4">
+            <div class="form-group"><label>L<sub>k</sub> – Khẩu độ CT (m)</label><input type="number" id="Lk" value="22.5"></div>
+            <div class="form-group"><label>H<sub>k</sub> – Cao CT (m)</label><input type="number" id="Hk" value="1.0"></div>
+            <div class="form-group"><label>B<sub>k</sub> – Rộng CT (m)</label><input type="number" id="Bk" value="4.4"></div>
+            <div class="form-group"><label>L<sub>1</sub> – Trục đến Ray (m)</label><input type="number" id="L1_val" value="0.75" step="0.05"></div>
+          </div>
+          <div class="form-row form-row-4">
+            <div class="form-group"><label>λ – Khe hở (mm)</label><input type="number" id="gapLambda" value="60" step="10"></div>
+          </div>
+          <div class="divider"></div>
+          <div class="section-label">Tiết diện sơ bộ</div>
+          <div class="form-row form-row-3">
+            <div class="form-group"><label>h<sub>cột</sub> – Cột (mm)</label><input type="number" id="hCol" value="400" step="50"></div>
+            <div class="form-group"><label>h<sub>dct</sub> – Dầm CT (mm)</label><input type="number" id="hDCT" value="600" step="50"></div>
+            <div class="form-group"><label>h<sub>xà</sub> – Xà ngang (mm)</label><input type="number" id="hXa" value="750" step="50"></div>
+          </div>
+        </div>
+      </div>
+      <button class="btn-report" id="btnReportFrame" type="button">📝 Thêm vào thuyết minh</button>
+    </div>
+  </div>
+</div>
+    <!-- ===== Module: Tải Trọng ===== -->
+    <div class="mod-content" id="mod-load">
+      <div class="dashboard-layout">
+        <div class="dash-left">
+          <div class="panel">
+            <div class="panel-head"><h2>⚖️ Thông Số Tải Trọng Tiêu Chuẩn</h2></div>
+            <div class="panel-body">
+              <div class="section-label">1. Tĩnh tải mái & tường</div>
+              <div class="form-row form-row-2">
+                <div class="form-group"><label>Tĩnh tải mái (kN/m²)</label><input type="number" id="loadRoof" value="0.15" step="0.05"></div>
+                <div class="form-group"><label>Tĩnh tải tường (kN/m²)</label><input type="number" id="loadWall" value="0.15" step="0.05"></div>
+              </div>
+              <div class="divider"></div>
+              <div class="section-label">2. Hoạt tải mái</div>
+              <div class="form-row form-row-2">
+                <div class="form-group"><label>Hoạt tải tiêu chuẩn (kN/m²)</label><input type="number" id="loadLiveRoof" value="0.3" step="0.05"></div>
+                <div class="form-group"><label>Hệ số vượt tải (γ<sub>L</sub>)</label><input type="number" id="gammaL" value="1.3" step="0.1"></div>
+              </div>
+              <div class="divider"></div>
+              <div class="section-label">3. Tải trọng gió (w<sub>0</sub> = 0.95 kN/m²)</div>
+              <div class="form-row form-row-3">
+                <div class="form-group"><label>Áp lực gió w<sub>0</sub> (kN/m²)</label><input type="number" id="loadWindW0" value="0.95" step="0.05"></div>
+                <div class="form-group"><label>Hệ số vượt tải (γ<sub>w</sub>)</label><input type="number" id="gammaW" value="1.2" step="0.1"></div>
+                <div class="form-group"><label>Hệ số k (chiều cao)</label><input type="number" id="loadWindK" value="1.0" step="0.1"></div>
+              </div>
+              <div class="form-row form-row-4">
+                <div class="form-group"><label>c (Cột đón)</label><input type="number" id="ce_push" value="0.8" step="0.1"></div>
+                <div class="form-group"><label>c<sub>e1</sub> (Mái đón)</label><input type="number" id="ce_roof1" value="-0.32" step="0.05"></div>
+                <div class="form-group"><label>c<sub>e2</sub> (Mái hút)</label><input type="number" id="ce_roof2" value="-0.4" step="0.05"></div>
+                <div class="form-group"><label>c<sub>e3</sub> (Cột hút)</label><input type="number" id="ce_pull" value="-0.5" step="0.05"></div>
+              </div>
+              <div class="divider"></div>
+              <div class="section-label">4. Hoạt tải cầu trục</div>
+              <div class="form-row form-row-4">
+                <div class="form-group"><label>Sức nâng Q (tấn)</label><input type="number" id="craneQ" value="10" step="1"></div>
+                <div class="form-group"><label>P<sub>max</sub> (kN)</label><input type="number" id="pmax_val" value="70.7" step="1"></div>
+                <div class="form-group"><label>P<sub>min</sub> (kN)</label><input type="number" id="pmin_val" value="21.1" step="1"></div>
+                <div class="form-group"><label>K<sub>k</sub> - Bề rộng đáy (mm)</label><input type="number" id="kk_val" value="3200" step="100"></div>
+              </div>
+              <div class="form-row form-row-4">
+                <div class="form-group"><label>G - Trọng lượng CT (T)</label><input type="number" id="g_crane" value="8.36" step="0.1"></div>
+                <div class="form-group"><label>G<sub>xc</sub> - Xe con (T)</label><input type="number" id="g_trolley" value="0.803" step="0.1"></div>
+                <div class="form-group"><label>Khoảng cách 2 xe (m)</label><input type="number" id="craneGap" value="0.7" step="0.1"></div>
+                <div class="form-group"><label>Hệ số n<sub>c</sub> (2 xe)</label><input type="number" id="gammaNC" value="0.85" step="0.05"></div>
+                <div class="form-group"><label>Hệ số γ<sub>P</sub></label><input type="number" id="gammaP_Crane" value="1.1" step="0.05"></div>
+              </div>
+              <div class="divider"></div>
+              <div class="section-label">5. Trọng lượng bản thân cấu kiện</div>
+              <div class="form-row form-row-2">
+                <div class="form-group"><label>Xà ngang g<sub>xn</sub> (kN/m)</label><input type="number" id="loadRafter" value="1.0" step="0.1"></div>
+                <div class="form-group"><label>Dầm cầu trục g<sub>dct</sub> (kN/m)</label><input type="number" id="loadDCT" value="1.0" step="0.1"></div>
+              </div>
+              <div class="divider"></div>
+              <div class="section-label">3. Hệ số tin cậy (γ<sub>f</sub>)</div>
+              <div class="form-row form-row-2">
+                <div class="form-group"><label>Hệ số mái/tường (γ<sub>f1</sub>)</label><input type="number" id="gammaF1" value="1.1" step="0.05"></div>
+                <div class="form-group"><label>Hệ số kết cấu (γ<sub>f2</sub>)</label><input type="number" id="gammaF2" value="1.05" step="0.05"></div>
+              </div>
+            </div>
+          </div>
+          <button class="btn-report" id="btnReportLoad" type="button">📝 Thêm vào thuyết minh</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Module: Thiết Kế Tiết Diện ===== -->
+    <div class="mod-content" id="mod-design">
+      <div class="dashboard-layout">
+        <div class="dash-left">
+          <div class="panel">
+            <div class="panel-head"><h2>📐 Thông Số Thiết Kế Tiết Diện</h2></div>
+            <div class="panel-body">
+              <div class="section-label">1. Chiều dài tính toán</div>
+              <div class="form-row form-row-3">
+                <div class="form-group"><label>Tỷ số độ cứng (I<sub>xa</sub> / I<sub>cột</sub>)</label><input type="number" id="stiffnessRatio" value="1.0" step="0.1"></div>
+                <div class="form-group"><label>Cao trình giằng cột (m)</label><input type="number" id="lyVal" value="3.5" step="0.1"></div>
+                <div class="form-group"><label>Kiểu tiết diện</label><select id="colType"><option value="constant" selected>Không đổi</option><option value="stepped">Thay đổi (Bậc)</option></select></div>
+              </div>
+              <div class="divider"></div>
+              <div class="section-label">2. Nội lực thiết kế (Cặp nội lực nguy hiểm nhất)</div>
+              <div class="form-row form-row-4">
+                <div class="form-group"><label>Lực dọc N (kN)</label><input type="number" id="designN" value="-224.83" step="1"></div>
+                <div class="form-group"><label>Mô men M vai (kNm)</label><input type="number" id="designM" value="-156.17" step="1"></div>
+                <div class="form-group"><label>Mô men M chân (kNm)</label><input type="number" id="designM_chan" value="126.06" step="1"></div>
+                <div class="form-group"><label>Lực cắt V (kN)</label><input type="number" id="designV" value="-44.8" step="1"></div>
+              </div>
+              <div class="divider"></div>
+              <div class="section-label">3. Tiết diện giả thiết (mm) & Các hệ số</div>
+              <div class="form-row form-row-4">
+                <div class="form-group"><label>Chiều cao h</label><input type="number" id="sec_h" value="400" step="10"></div>
+                <div class="form-group"><label>Bề rộng cánh b<sub>f</sub></label><input type="number" id="sec_bf" value="200" step="10"></div>
+                <div class="form-group"><label>Dày bản bụng t<sub>w</sub></label><input type="number" id="sec_tw" value="6" step="1"></div>
+                <div class="form-group"><label>Dày bản cánh t<sub>f</sub></label><input type="number" id="sec_tf" value="10" step="1"></div>
+              </div>
+              <div class="form-row form-row-3" style="margin-top: 10px;">
+                <div class="form-group"><label>Hệ số ổn định φ<sub>e</sub> (Bảng IV.3)</label><input type="number" id="phi_e" value="0.178" step="0.001"></div>
+                <div class="form-group"><label>Hệ số ổn định φ<sub>y</sub> (Bảng IV.2)</label><input type="number" id="phi_y" value="0.743" step="0.001"></div>
+                <div class="form-group"><label>Hệ số làm việc γ<sub>c</sub></label><input type="number" id="gamma_c" value="1.0" step="0.05"></div>
+              </div>
+            </div>
+          </div>
+          <button class="btn-report" id="btnReportDesign" type="button">📝 Thêm vào thuyết minh</button>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- Tab: Report -->
+  <section class="tab-content" id="tab-report">
+    <div class="report-toolbar">
+      <button class="btn btn-outline" id="btnPrint"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6,9 6,2 18,2 18,9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> In</button>
+      <button class="btn btn-outline" id="btnExport"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7,10 12,15 17,10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Xuất HTML</button>
+      <button class="btn btn-primary" id="btnWord"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 8l2 8 2-6 2 6 2-8"/></svg> Tải Word</button>
+    </div>
+    <div class="report-paper" id="reportPaper">
+      <div class="report-empty">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" opacity=".3"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+        <h3>Chưa có thuyết minh</h3>
+        <p>Vui lòng nhập thông số và nhấn <strong>Tính toán</strong> ở Bảng Điều Khiển</p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="data/phi_e_table.js?v=20260425"></script>
+<script src="data/phi_y_table.js?v=20260425"></script>
+<script src="app.js?v=202604252"></script>
+</body>
+</html>
