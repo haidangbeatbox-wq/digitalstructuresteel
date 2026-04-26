@@ -1635,19 +1635,39 @@ function appendToReport(html, sectionId) {
 
 // === Word Export ===
 function exportWord() {
-  const content = $('reportPaper').innerHTML;
-  if (!content || $('reportPaper').querySelector('.report-empty')) {
+  const paper = $('reportPaper');
+  if (!paper || !paper.innerHTML || paper.querySelector('.report-empty')) {
     alert('Chưa có nội dung thuyết minh!');
     return;
   }
+
+  const clone = paper.cloneNode(true);
+  const svgs = clone.querySelectorAll('svg');
+  svgs.forEach(svg => {
+    const placeholder = document.createElement('div');
+    placeholder.innerText = 'Lỗi hình';
+    placeholder.style.color = 'red';
+    placeholder.style.fontStyle = 'italic';
+    svg.parentNode.replaceChild(placeholder, svg);
+  });
+  
+  const content = clone.innerHTML;
+  
   const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
     <head><meta charset="utf-8"><style>body{font-family:'Times New Roman';font-size:13pt}table{border-collapse:collapse;width:100%}th,td{border:1px solid #000;padding:6px 10px}h2{color:#1a365d;font-size:16pt}h3{font-size:14pt}h4{font-size:13pt;font-style:italic}.formula-block{background:#f0f4ff;border-left:3px solid #3b82f6;padding:12px 16px;margin:10px 0}</style></head>
     <body>${content}</body></html>`;
-  const blob = new Blob([html], { type: 'application/msword' });
+  
+  // Sử dụng application/octet-stream để ép trình duyệt tải file thô, vượt qua lỗi bảo mật UUID của file://
+  const blob = new Blob([html], { type: 'application/octet-stream' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'ThuvetMinh_KetCauThep.doc';
+  a.download = 'ThuyetMinh_KetCauThep.doc';
+  
+  a.style.display = 'none';
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
+  
   URL.revokeObjectURL(a.href);
 }
 
@@ -2577,12 +2597,196 @@ function reportDetailDesign() {
       <p>$$\\tau_1 = \\frac{V S_f^{dv}}{I_x^{dv} t_w} = \\frac{${V_vai.toFixed(1)} \\cdot ${Sf_dv.toFixed(0)}}{${Ix_dv.toFixed(1)} \\cdot ${tw_dv}} = ${tau1.toFixed(2)} \\text{ (kN/cm}^2\\text{)}.$$</p>
     </div>
 
+    <div style="text-align: center; margin: 30px 0;">
+      <svg viewBox="0 0 600 260" width="100%" style="max-width: 600px; background: #fff; border: 1px solid #eee; border-radius: 8px;">
+        <style>
+          .line { stroke: #000; stroke-width: 1.2; fill: none; }
+          .dash { stroke: #444; stroke-width: 0.8; stroke-dasharray: 3,2; }
+          .dim { stroke: #666; stroke-width: 0.6; }
+          .txt { font-size: 11px; font-family: 'Times New Roman', serif; fill: #000; text-anchor: middle; }
+          .hatch { fill: url(#hatchPattern); }
+        </style>
+        <defs>
+          <pattern id="hatchPattern" patternUnits="userSpaceOnUse" width="4" height="4">
+            <path d="M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2" style="stroke:#ddd; stroke-width:0.5" />
+          </pattern>
+        </defs>
+        
+        <!-- Mặt bên (Side View) -->
+        <g transform="translate(60, 40)">
+          <!-- Cột -->
+          <line x1="0" y1="-20" x2="0" y2="160" class="line" />
+          <line x1="60" y1="-20" x2="60" y2="160" class="line" />
+          <!-- Gân ngang cột -->
+          <line x1="0" y1="30" x2="60" y2="30" class="line" />
+          <line x1="0" y1="120" x2="60" y2="120" class="line" />
+          
+          <!-- Vai cột -->
+          <rect x="60" y="30" width="140" height="90" class="line" /> <!-- Thân vai -->
+          <!-- Gân đứng vai (dưới lực F) -->
+          <line x1="160" y1="30" x2="160" y2="120" class="line" /> 
+          <text x="168" y="75" class="txt" style="font-size:9px;">${tw_dv * 10 - 2}</text>
+          
+          <!-- Lực F -->
+          <path d="M160,-10 L160,20" class="line" style="stroke-width:2;"/>
+          <path d="M160,20 L156,12 M160,20 L164,12" class="line" />
+          <text x="172" y="5" class="txt" style="font-weight:bold; font-size:14px;">F</text>
+          <rect x="135" y="20" width="50" height="10" class="line" /> <!-- Đế dầm -->
+
+          <!-- Ký hiệu trục -->
+          <circle cx="-30" cy="185" r="8" class="line" />
+          <line x1="-30" y1="160" x2="-30" y2="177" class="dash" />
+
+          <!-- Đường kích thước ngang -->
+          <g transform="translate(0, 150)">
+            <line x1="-30" y1="0" x2="160" y2="0" class="dim" />
+            <line x1="-30" y1="-3" x2="-30" y2="3" class="dim" />
+            <line x1="60" y1="-3" x2="60" y2="3" class="dim" />
+            <line x1="160" y1="-3" x2="160" y2="3" class="dim" />
+            <text x="15" y="15" class="txt">${Math.round(h_col * 10)}</text>
+            <text x="110" y="15" class="txt">${Math.round(L1 * 1000 - h_col * 10)}</text>
+            
+            <line x1="-30" y1="25" x2="160" y2="25" class="dim" />
+            <line x1="-30" y1="22" x2="-30" y2="28" class="dim" />
+            <line x1="160" y1="22" x2="160" y2="28" class="dim" />
+            <text x="65" y="40" class="txt">${Math.round(L1 * 1000)}</text>
+          </g>
+          
+          <g transform="translate(160, 150)">
+            <line x1="0" y1="0" x2="40" y2="0" class="dim" />
+            <line x1="40" y1="-3" x2="40" y2="3" class="dim" />
+            <text x="20" y="15" class="txt">150</text>
+          </g>
+
+          <!-- Kích thước đứng -->
+          <line x1="215" y1="30" x2="215" y2="120" class="dim" />
+          <line x1="210" y1="30" x2="220" y2="30" class="dim" />
+          <line x1="210" y1="120" x2="220" y2="120" class="dim" />
+          <text x="235" y="75" class="txt" transform="rotate(90, 235, 75)">${Math.round(h_dv * 10)}</text>
+          
+          <text x="30" y="50" class="txt" transform="rotate(-90, 30, 50)" style="font-size:14px; letter-spacing:8px;">1</text>
+          <text x="30" y="110" class="txt" transform="rotate(-90, 30, 110)" style="font-size:14px; letter-spacing:8px;">1</text>
+
+          <text x="80" y="-10" class="txt" style="font-size:14px;">1</text>
+          <text x="80" y="140" class="txt" style="font-size:14px;">1</text>
+        </g>
+
+        <!-- Mặt cắt 1-1 -->
+        <g transform="translate(420, 50)">
+          <rect x="0" y="0" width="80" height="6" class="line" /> <!-- Cánh trên -->
+          <rect x="0" y="84" width="80" height="6" class="line" /> <!-- Cánh dưới -->
+          <rect x="37" y="6" width="6" height="78" class="line" /> <!-- Bụng -->
+          
+          <!-- Sườn -->
+          <line x1="37" y1="42" x2="15" y2="42" class="line" />
+          <line x1="43" y1="42" x2="65" y2="42" class="line" />
+          <text x="26" y="38" class="txt" style="font-size:9px;">${Math.round((bf_dv * 10 - tw_dv * 10) / 2 - 10)}</text>
+          <text x="54" y="38" class="txt" style="font-size:9px;">${Math.round((bf_dv * 10 - tw_dv * 10) / 2 - 10)}</text>
+          <text x="40" y="65" class="txt" style="font-size:9px;">${tw_dv * 10}</text>
+
+          <!-- Kích thước -->
+          <line x1="90" y1="0" x2="90" y2="90" class="dim" />
+          <line x1="87" y1="0" x2="93" y2="0" class="dim" />
+          <line x1="87" y1="6" x2="93" y2="6" class="dim" />
+          <line x1="87" y1="84" x2="93" y2="84" class="dim" />
+          <line x1="87" y1="90" x2="93" y2="90" class="dim" />
+          <text x="105" y="5" class="txt">${tf_dv * 10}</text>
+          <text x="105" y="45" class="txt">${hw_dv * 10}</text>
+          <text x="105" y="87" class="txt">${tf_dv * 10}</text>
+          <text x="125" y="45" class="txt" transform="rotate(90, 125, 45)">${Math.round(h_dv * 10)}</text>
+          
+          <line x1="0" y1="-15" x2="80" y2="-15" class="dim" />
+          <line x1="0" y1="-18" x2="0" y2="-12" class="dim" />
+          <line x1="80" y1="-18" x2="80" y2="-12" class="dim" />
+          <text x="40" y="-25" class="txt">${bf_dv * 10}</text>
+
+          <text x="40" y="120" class="txt" style="font-size:14px; text-decoration: underline;">1-1</text>
+        </g>
+      </svg>
+      <p style="font-style:italic; font-size:0.9rem; color:#444; margin-top:5px; font-family:'Times New Roman', serif;">Hình 3.23. Cấu tạo vai cột</p>
+    </div>
+
     <p>Kiểm tra ứng suất tương đương:</p>
     <div class="formula-center">
       <p>$$\\sigma_{td} = \\sqrt{\\sigma_1^2 + 3 \\tau_1^2} = \\sqrt{${sigma1.toFixed(2)}^2 + 3 \\cdot ${tau1.toFixed(2)}^2} = ${Math.sqrt(sigma1**2 + 3*tau1**2).toFixed(2)} \\text{ (kN/cm}^2\\text{)} \\leq 1,15 f \\gamma_c = ${(1.15 * fy * gc).toFixed(1)} \\text{ (kN/cm}^2\\text{)}.$$</p>
     </div>
-    <p>Kết luận: Tiết diện vai cột ${(Math.sqrt(sigma1**2 + 3*tau1**2) <= 1.15 * fy * gc) ? 'ĐẠT' : 'KHÔNG ĐẠT'} yêu cầu.</p>
+
+    <p>Kiểm tra ổn định cục bộ của bản cánh và bản bụng dầm vai:</p>
+    <div style="margin-left: 20px;">
+      <p>+ Bản cánh: 
+        $$\\frac{b_0}{t_f^{dv}} = \\frac{0,5(${bf_dv} - ${tw_dv})}{${tf_dv}} = ${((bf_dv - tw_dv) * 0.5 / tf_dv).toFixed(1)} < \\frac{1}{2} \\sqrt{\\frac{E}{f}} = \\frac{1}{2} \\sqrt{\\frac{2,1 \\cdot 10^4}{${fy}}} = 15,8.$$
+      </p>
+      <p>+ Bản bụng: 
+        $$\\frac{h_w^{dv}}{t_w^{dv}} = \\frac{${hw_dv}}{${tw_dv}} = ${(hw_dv / tw_dv).toFixed(1)} < 2,5 \\sqrt{\\frac{E}{f}} = 2,5 \\sqrt{\\frac{2,1 \\cdot 10^4}{${fy}}} = 79.$$
+      </p>
+    </div>
+
+    <p>Kết luận: Tiết diện vai cột đã chọn đảm bảo điều kiện ổn định cục bộ.</p>
+
+    <p><b>3.6.1.1. Thiết kế mối hàn liên kết vai cột vào cột:</b></p>
+    <p>Theo cấu tạo, chọn chiều cao đường hàn liên kết dầm vai vào cột $h_f = ${parseFloat($('detHf').value)} $ cm. Chiều dài tính toán của các đường hàn xác định như sau:</p>
+    <ul>
+      <li>Phía trên cánh (2 đường hàn): $l_{w1} = b_f - 1 = ${bf_dv} - 1 = ${bf_dv - 1} $ cm.</li>
+      <li>Phía dưới cánh (4 đường hàn): $l_{w2} = 0,5(b_f - t_w) - 1 = 0,5(${bf_dv} - ${tw_dv}) - 1 \approx ${Math.round(0.5 * (bf_dv - tw_dv) - 1)} $ cm.</li>
+      <li>Ở bản bụng (2 đường hàn): $l_{w3} = h_w - 1 = ${hw_dv} - 1 = ${hw_dv - 1} $ cm.</li>
+    </ul>
+
+    <p>Diện tích tiết diện và mô men chống uốn của các đường hàn trong liên kết (coi lực cắt chỉ do các đường hàn liên kết ở bản bụng chịu):</p>
+    <div class="formula-center">
+      <p>$$A_w = 2 \cdot h_f \cdot l_{w3} = 2 \cdot ${parseFloat($('detHf').value)} \cdot ${hw_dv - 1} = ${(2 * parseFloat($('detHf').value) * (hw_dv - 1)).toFixed(1)} \\text{ (cm}^2\\text{)};$$</p>
+      <p>$$W_w = \\frac{2 I_w}{h_{dv}}$$</p>
+      <p>Với $I_w \\approx 2 \\left[ \\left( \\frac{l_{w1} h_f^3}{12} + l_{w1} h_f (\\frac{h_{dv}}{2})^2 \\right) + \\left( 2 \\frac{l_{w2} h_f^3}{12} + 2 l_{w2} h_f (\\frac{h_w}{2})^2 \\right) + \\frac{h_f l_{w3}^3}{12} \\right]$</p>
+      <p>$$W_w = ${calculateWw().toFixed(1)} \\text{ (cm}^3\\text{)}.$$</p>
+    </div>
+
+    <p>Khả năng chịu lực của các đường hàn được kiểm tra theo công thức (2.67):</p>
+    <div class="formula-center">
+      <p>$$\\sigma_{td} = \\sqrt{ \\left( \\frac{M}{W_w} \\right)^2 + \\left( \\frac{V}{A_w} \\right)^2 } = \\sqrt{ \\left( \\frac{${M_vai.toFixed(2)} \\cdot 10^2}{${calculateWw().toFixed(1)}} \\right)^2 + \\left( \\frac{${V_vai.toFixed(1)}}{${(2 * parseFloat($('detHf').value) * (hw_dv - 1)).toFixed(1)}} \\right)^2 }$$</p>
+      <p>$$\\sigma_{td} = ${calculateSigmaW().toFixed(2)} \\text{ (kN/cm}^2\\text{)} \\leq (\\beta f_w)_{min} \\gamma_c = ${calculateLimitW().toFixed(1)} \\text{ (kN/cm}^2\\text{)}.$$</p>
+    </div>
+
+    <p><b>3.6.1.2. Kích thước cặp sườn gia cường cho bụng dầm vai:</b></p>
+    <ul>
+      <li>Chiều cao: $h_s = h_w^{dv} = ${hw_dv} $ cm.</li>
+      <li>Bề rộng: $b_s = \\frac{h_w^{dv} \\cdot 10}{30} + 40 = \\frac{${hw_dv * 10}}{30} + 40 = ${((hw_dv * 10) / 30 + 40).toFixed(1)} \\text{ (mm)} \\rightarrow \\text{Chọn } b_s = ${Math.ceil((hw_dv * 10) / 30 + 40) / 10} \\text{ cm}.$$</li>
+      <li>Bề dày: $t_s \\geq 2 b_s \\sqrt{f/E} = 2 \\cdot ${Math.ceil((hw_dv * 10) / 30 + 40) / 10} \\cdot \\sqrt{${fy}/21000} = ${(2 * (Math.ceil((hw_dv * 10) / 30 + 40) / 10) * Math.sqrt(fy / 21000)).toFixed(2)} \\text{ (cm)} \\rightarrow \\text{Chọn } t_s = 0,6 \\text{ cm}.$$</li>
+    </ul>
+
+    <p>Cấu tạo vai cột như hình 3.23 đã trình bày ở trên.</p>
   `;
+
+  function calculateWw() {
+    const hf = parseFloat($('detHf').value);
+    const lw1 = bf_dv - 1;
+    const lw2 = Math.round(0.5 * (bf_dv - tw_dv) - 1);
+    const lw3 = hw_dv - 1;
+    const h = h_dv;
+    const hw = hw_dv;
+    const Iw = 2 * ( ( (lw1 * Math.pow(hf, 3))/12 + lw1 * hf * Math.pow(h/2, 2) ) + ( 2 * (lw2 * Math.pow(hf, 3))/12 + 2 * lw2 * hf * Math.pow(hw/2, 2) ) + (hf * Math.pow(lw3, 3))/12 );
+    return (2 * Iw) / h;
+  }
+
+  function calculateSigmaW() {
+    const Ww = calculateWw();
+    const Aw = 2 * parseFloat($('detHf').value) * (hw_dv - 1);
+    return Math.sqrt(Math.pow((M_vai * 100 / Ww), 2) + Math.pow((V_vai / Aw), 2));
+  }
+
+  function calculateLimitW() {
+    // Lấy giá trị fw từ mác que hàn (giả sử N42 -> 18, N46 -> 21.5, N50 -> 24)
+    const rod = $('weldRod').value;
+    let fw = 18;
+    if(rod === 'N46') fw = 21.5;
+    if(rod === 'N50') fw = 24;
+    
+    // Hệ số beta (tay -> 0.7, bán tự động -> 0.8, tự động -> 0.9)
+    const method = $('weldMethod').value;
+    let beta = 0.7;
+    if(method === 'semi_auto') beta = 0.8;
+    if(method === 'auto') beta = 0.9;
+    
+    return beta * fw * gc;
+  }
 
   appendToReport(html, 'report-detail');
 }
