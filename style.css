@@ -1,17 +1,52 @@
 /* ===== RESET & BASE ===== */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#0f1117;--bg2:#161822;--bg3:#1e2030;--bg4:#262940;
-  --text:#e2e8f0;--text2:#94a3b8;--text3:#64748b;
-  --blue:#60a5fa;--purple:#a78bfa;--green:#34d399;--red:#f87171;--yellow:#fbbf24;--pink:#f472b6;
-  --grad:linear-gradient(135deg,#60a5fa,#a78bfa);
-  --radius:12px;--radius-sm:8px;
-  --shadow:0 4px 24px rgba(0,0,0,.35);
-  --sidebar-w:260px;
-  --topbar-h:60px;
+:root {
+  --bg: #0b0d13;
+  --bg2: #12141c;
+  --bg3: #1a1d29;
+  --bg4: #24283b;
+  --text: #f1f5f9;
+  --text2: #94a3b8;
+  --text3: #64748b;
+  --blue: #3b82f6;
+  --purple: #8b5cf6;
+  --green: #10b981;
+  --red: #ef4444;
+  --yellow: #f59e0b;
+  --pink: #ec4899;
+  --grad: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 10px 30px rgba(0,0,0,0.4);
+  --sidebar-w: 260px;
+  --topbar-h: 64px;
 }
-html{font-size:14px}
-body{font-family:'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";background:var(--bg);color:var(--text);display:flex;min-height:100vh;overflow-x:hidden}
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  background-image: 
+    radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.08) 0%, transparent 40%),
+    radial-gradient(circle at 100% 100%, rgba(139, 92, 246, 0.08) 0%, transparent 40%),
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 40px 40px, 40px 40px;
+  color: var(--text);
+  display: flex;
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+body::after {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 50%, transparent 0%, var(--bg) 100%);
+  pointer-events: none;
+  z-index: -1;
+}
 a{color:var(--blue);text-decoration:none}
 input,select,textarea{font-family:inherit;font-size:.9rem}
 
@@ -21,10 +56,61 @@ input,select,textarea{font-family:inherit;font-size:.9rem}
 ::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
 
 /* ===== SIDEBAR ===== */
-.sidebar{width:var(--sidebar-w);background:var(--bg2);border-right:1px solid rgba(255,255,255,.06);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;transition:transform .3s ease}
+.sidebar {
+  width: var(--sidebar-w);
+  background: rgba(18, 20, 28, 0.8);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 100;
+  transition: transform 0.3s ease;
+}
 .sidebar-header{padding:20px;border-bottom:1px solid rgba(255,255,255,.06)}
-.logo{display:flex;align-items:center;gap:10px;font-size:1.25rem;font-weight:700;color:var(--blue);background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.logo small{font-weight:400;font-size:.7rem;opacity:.6;-webkit-text-fill-color:var(--text3)}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  padding: 4px 0;
+}
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+.logo-main {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #fff 30%, #60a5fa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+.logo-sub {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-top: 2px;
+  background: linear-gradient(90deg, var(--blue), var(--pink));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  opacity: 0.9;
+}
+.logo:hover .logo-main {
+  background: linear-gradient(135deg, #fff 0%, var(--blue) 100%);
+  -webkit-background-clip: text;
+  transition: all 0.3s ease;
+}
 .nav-list{list-style:none;padding:12px;flex:1}
 .nav-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:var(--radius-sm);color:var(--text2);cursor:pointer;transition:all .2s;margin-bottom:4px;font-weight:500}
 .nav-item:hover{background:rgba(255,255,255,.05);color:var(--text)}
@@ -36,8 +122,27 @@ input,select,textarea{font-family:inherit;font-size:.9rem}
 .main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column}
 
 /* ===== TOPBAR ===== */
-.topbar{height:var(--topbar-h);background:rgba(15,17,23,.8);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:50}
-.topbar h1{font-size:1.15rem;font-weight:600;flex:1}
+.topbar {
+  height: var(--topbar-h);
+  background: rgba(11, 13, 19, 0.7);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+.topbar h1 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: #fff;
+  flex: 1;
+}
 .menu-btn{display:none;background:none;border:none;color:var(--text);cursor:pointer;padding:4px}
 .topbar-actions{display:flex;gap:8px}
 .btn-icon{width:40px;height:40px;border-radius:var(--radius-sm);background:var(--bg3);border:1px solid rgba(255,255,255,.08);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s}
@@ -68,10 +173,28 @@ input,select,textarea{font-family:inherit;font-size:.9rem}
 .stat-mini span:last-child{font-size:.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px}
 
 /* ===== PANELS ===== */
-.panel{background:var(--bg2);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);overflow:hidden;transition:border-color .25s}
-.panel:hover{border-color:rgba(255,255,255,.1)}
+.panel {
+  background: rgba(18, 20, 28, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: var(--shadow);
+}
+.panel:hover {
+  border-color: rgba(59, 130, 246, 0.2);
+  background: rgba(18, 20, 28, 0.8);
+  transform: translateY(-2px);
+}
 .panel-head{padding:14px 20px;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between}
-.panel-head h2{font-size:.9rem;font-weight:600}
+.panel-head h2 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #fff;
+}
 .panel-body{padding:16px 20px}
 
 /* ===== FORMS ===== */
@@ -82,7 +205,18 @@ input,select,textarea{font-family:inherit;font-size:.9rem}
 .form-group input[readonly]{opacity:.65;cursor:default}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .divider{height:1px;background:rgba(255,255,255,.06);margin:16px 0}
-.section-label{font-size:.8rem;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px;padding-left:2px}
+.section-label {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--blue);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 12px;
+  padding-left: 2px;
+  border-left: 3px solid var(--blue);
+  padding-left: 10px;
+}
 .panel-full{grid-column:1 / -1}
 .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 .form-row-4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
@@ -217,7 +351,9 @@ canvas{background:var(--bg3);border-radius:var(--radius-sm)}
     align-items:center;
     justify-content:space-between;
   }
-  .logo{font-size:1.4rem}
+  .logo { font-size: 1.4rem; }
+  .logo-main { font-size: 1.5rem; }
+  .logo-sub { font-size: 0.8rem; }
   .nav-list{padding:16px 20px}
   .nav-item{
     padding:16px 20px;
