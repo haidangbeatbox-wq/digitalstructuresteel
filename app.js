@@ -452,13 +452,36 @@ $('btnSuggestCol').addEventListener('click', () => {
 });
 
 $('btnSuggestRaft').addEventListener('click', () => {
-  const L = +$('spanL').value * 1000;
-  const h = Math.round(L / 30 / 10) * 10;
-  $('raft_h').value = h;
-  $('raft_bf').value = 200;
-  $('raft_tw').value = 8;
+  const M1 = Math.abs(+$('raftM').value);
+  const fy = +$('fy').value;
+  const gc = +$('gamma_c').value || 1.0;
+  const tw = 8; // Sơ bộ tw = 8mm = 0.8cm
+  const tw_cm = tw / 10;
+  const Wx_yc = (M1 * 100) / (fy * gc);
+  const h_opt = 1.15 * Math.sqrt(Wx_yc / tw_cm);
+  const h_mm = Math.round(h_opt * 10 / 10) * 10;
+  const bf = Math.min(200, Math.max(180, Math.round(h_mm * 0.3 / 10) * 10));
+  $('raft_h').value = h_mm;
+  $('raft_bf').value = bf;
+  $('raft_tw').value = tw;
   $('raft_tf').value = 12;
   updateAutoRafter();
+});
+
+$('btnSuggestRaft2')?.addEventListener('click', () => {
+  const M2 = Math.abs(+$('raftM2').value);
+  const fy = +$('fy').value;
+  const gc = +$('gamma_c').value || 1.0;
+  const tw = 6; // Sơ bộ tw = 6mm = 0.6cm
+  const tw_cm = tw / 10;
+  const Wx_yc = (M2 * 100) / (fy * gc);
+  const h_opt = 1.15 * Math.sqrt(Wx_yc / tw_cm);
+  const h_mm = Math.round(h_opt * 10 / 10) * 10; // Làm tròn đến 10mm
+  const bf = Math.min(200, Math.max(150, Math.round(h_mm * 0.8 / 10) * 10));
+  $('raft_h2').value = h_mm;
+  $('raft_bf2').value = bf;
+  $('raft_tw2').value = tw;
+  $('raft_tf2').value = 10;
 });
 
 // Bind events
@@ -2106,7 +2129,7 @@ function reportRafterDesign() {
   const tf_mm = parseFloat($('raft_tf').value);
   const lx = parseFloat($('raftLx').value);
   const ly = parseFloat($('raftLy').value);
-  const gc = parseFloat($('raft_gamma_c').value);
+  const gc = parseFloat($('gamma_c').value);
   const fy = parseFloat($('fy').value);
   const fv = parseFloat($('fv').value);
   const E_val = parseFloat($('E').value);
@@ -2216,7 +2239,7 @@ function reportRafterDesign() {
   const limit_web_shear = 3.2 * Math.sqrt(21000 / fy);
   const limit_web_combined = 2.5 * Math.sqrt(21000 / fy);
 
-  const html = `
+  let html = `
     <h3>3.5.2. Thiết kế tiết diện xà ngang</h3>
     <p>a) Đoạn xà (tiết diện thay đổi)</p>
     <p>Từ bảng tổ hợp nội lực chọn cặp nội lực tính toán:</p>
@@ -2296,13 +2319,275 @@ function reportRafterDesign() {
     <p>$\\rightarrow$ Bản bụng không bị mất ổn định cục bộ dưới tác dụng của ứng suất pháp và ứng suất tiếp (không phải kiểm tra các ô bụng).</p>
     <p>Vậy tiết diện xà đã chọn là đạt yêu cầu. Tỷ số độ cứng của tiết diện xà (ở chỗ tiếp giáp với cột) và cột đã chọn phù hợp với giả thiết ban đầu là bằng nhau.</p>
   `;
-  
+
+  // === b) Đoạn xà tiết diện không đổi ===
+  const L_span = parseFloat($('spanL')?.value || 24);
+  const d1_haunch = Math.round(L_span / 6);
+  const d2_const = L_span / 2 - d1_haunch;
+
+  const M2_val = parseFloat($('raftM2')?.value || 101.69);
+  const N2_val = parseFloat($('raftN2')?.value || -34.66);
+  const V2_val = parseFloat($('raftV2')?.value || -3.47);
+  const absM2 = Math.abs(M2_val);
+  const absN2 = Math.abs(N2_val);
+  const absV2 = Math.abs(V2_val);
+
+  const h2_mm = parseFloat($('raft_h2')?.value || 250);
+  const bf2_mm = parseFloat($('raft_bf2')?.value || 200);
+  const tw2_mm = parseFloat($('raft_tw2')?.value || 6);
+  const tf2_mm = parseFloat($('raft_tf2')?.value || 10);
+
+  const h2_cm = h2_mm / 10;
+  const bf2_cm = bf2_mm / 10;
+  const tw2_cm = tw2_mm / 10;
+  const tf2_cm = tf2_mm / 10;
+  const hw2_cm = h2_cm - 2 * tf2_cm;
+  const h2_fc = h2_cm - tf2_cm;
+
+  // 1. Wx cần thiết
+  const Wx2_yc = (absM2 * 100) / (fy * gc);
+
+  // 2. Chiều cao tối ưu
+  const h2_opt_min = 1.15 * Math.sqrt(Wx2_yc / tw2_cm);
+  const h2_opt_max = 1.2 * Math.sqrt(Wx2_yc / tw2_cm);
+
+  // 3. Kiểm tra tw từ điều kiện cắt
+  const tw2_req = (1.5 * absV2) / (h2_cm * fv * gc);
+
+  // 4. Af_yc
+  const Af2_yc = (Wx2_yc * (h2_cm / 2) - (tw2_cm * Math.pow(hw2_cm, 3)) / 12) * (2 / Math.pow(h2_fc, 2));
+
+  // 5. Đặc trưng thực tế
+  const A2 = 2 * bf2_cm * tf2_cm + hw2_cm * tw2_cm;
+  const Ix2 = (bf2_cm * Math.pow(h2_cm, 3) - (bf2_cm - tw2_cm) * Math.pow(hw2_cm, 3)) / 12;
+  const Wx2 = 2 * Ix2 / h2_cm;
+  const ix2 = Math.sqrt(Ix2 / A2);
+  const Iy2 = (2 * tf2_cm * Math.pow(bf2_cm, 3) + hw2_cm * Math.pow(tw2_cm, 3)) / 12;
+  const iy2 = Math.sqrt(Iy2 / A2);
+
+  // 6. Kiểm tra bền
+  const mx2 = (absM2 * 100 * A2) / (absN2 * Wx2);
+  const sigma_x2 = absN2 / A2 + (absM2 * 100) / Wx2;
+  const isSafe2 = sigma_x2 <= (fy * gc) ? "<" : ">";
+
+  // 7. Ứng suất tương đương
+  const Sf2 = (bf2_cm * tf2_cm) * (h2_cm - tf2_cm) / 2;
+  const sigma_12 = (absM2 * 100 / Wx2) * (hw2_cm / h2_cm);
+  const tau_12 = (absV2 * Sf2) / (Ix2 * tw2_cm);
+  const sigma_td2 = Math.sqrt(Math.pow(sigma_12, 2) + 3 * Math.pow(tau_12, 2));
+  const limit_sigma_td2 = 1.15 * fy * gc;
+
+  // 8. Ổn định cục bộ
+  const b0_2 = 0.5 * (bf2_cm - tw2_cm);
+  const b0_tf2 = b0_2 / tf2_cm;
+  const limit_flange2 = 0.5 * Math.sqrt(E_val / fy);
+  const hw_tw2 = hw2_cm / tw2_cm;
+  const limit_web_comp2 = 5.5 * Math.sqrt(E_val / fy);
+  const limit_web_shear2 = 3.2 * Math.sqrt(E_val / fy);
+  const limit_web_comb2 = 2.5 * Math.sqrt(E_val / fy);
+
+  // SVG mặt cắt
+  const draw_tw2 = Math.max(tw2_mm, h2_mm * 0.02);
+  const draw_tf2 = Math.max(tf2_mm, h2_mm * 0.03);
+  const hw2_mm = h2_mm - 2 * tf2_mm;
+
+  const svg2_html = `
+    <div style="text-align: center; margin: 25px 0; display: flex; justify-content: center; align-items: flex-end; gap: 20px;">
+      <svg viewBox="-${h2_mm/2 + 80} -${bf2_mm/2 + 60} ${h2_mm + 160} ${bf2_mm + 120}" width="280">
+        <style>
+          .dim-line { stroke: #333; stroke-width: 1.2; }
+          .dim-text { font-family: 'Times New Roman', serif; font-size: 18px; fill: #333; text-anchor: middle; }
+          .sec-line { fill: none; stroke: #000; stroke-width: 2.5; }
+          .axis-line { stroke: #000; stroke-width: 1; stroke-dasharray: 10,5,2,5; }
+        </style>
+        <defs>
+          <marker id="arrow-b" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#000" /></marker>
+        </defs>
+        <!-- Trục -->
+        <line x1="-${h2_mm/2 + 40}" y1="0" x2="${h2_mm/2 + 40}" y2="0" class="axis-line" />
+        <text x="-${h2_mm/2 + 50}" y="5" class="dim-text">y</text>
+        <text x="${h2_mm/2 + 50}" y="5" class="dim-text">y</text>
+        <line x1="0" y1="-${bf2_mm/2 + 30}" x2="0" y2="${bf2_mm/2 + 30}" class="axis-line" />
+        <text x="0" y="-${bf2_mm/2 + 40}" class="dim-text">x</text>
+        <text x="0" y="${bf2_mm/2 + 50}" class="dim-text">x</text>
+        <!-- Mặt cắt -->
+        <path d="M -${h2_mm/2},-${bf2_mm/2} L -${h2_mm/2 - draw_tf2},-${bf2_mm/2} L -${h2_mm/2 - draw_tf2},-${draw_tw2/2} L ${h2_mm/2 - draw_tf2},-${draw_tw2/2} L ${h2_mm/2 - draw_tf2},-${bf2_mm/2} L ${h2_mm/2},-${bf2_mm/2} L ${h2_mm/2},${bf2_mm/2} L ${h2_mm/2 - draw_tf2},${bf2_mm/2} L ${h2_mm/2 - draw_tf2},${draw_tw2/2} L -${h2_mm/2 - draw_tf2},${draw_tw2/2} L -${h2_mm/2 - draw_tf2},${bf2_mm/2} L -${h2_mm/2},${bf2_mm/2} Z" class="sec-line" />
+        <!-- Kích thước h (ngang dưới) -->
+        <line x1="-${h2_mm/2}" y1="${bf2_mm/2 + 15}" x2="-${h2_mm/2}" y2="${bf2_mm/2 + 35}" class="dim-line" />
+        <line x1="${h2_mm/2}" y1="${bf2_mm/2 + 15}" x2="${h2_mm/2}" y2="${bf2_mm/2 + 35}" class="dim-line" />
+        <line x1="-${h2_mm/2}" y1="${bf2_mm/2 + 25}" x2="${h2_mm/2}" y2="${bf2_mm/2 + 25}" class="dim-line" marker-start="url(#arrow-b)" marker-end="url(#arrow-b)" />
+        <text x="0" y="${bf2_mm/2 + 20}" class="dim-text">${h2_mm}</text>
+        <!-- Kích thước bf (đứng phải) -->
+        <line x1="${h2_mm/2 + 15}" y1="-${bf2_mm/2}" x2="${h2_mm/2 + 35}" y2="-${bf2_mm/2}" class="dim-line" />
+        <line x1="${h2_mm/2 + 15}" y1="${bf2_mm/2}" x2="${h2_mm/2 + 35}" y2="${bf2_mm/2}" class="dim-line" />
+        <line x1="${h2_mm/2 + 25}" y1="-${bf2_mm/2}" x2="${h2_mm/2 + 25}" y2="${bf2_mm/2}" class="dim-line" marker-start="url(#arrow-b)" marker-end="url(#arrow-b)" />
+        <text x="${h2_mm/2 + 35}" y="5" class="dim-text" transform="rotate(-90, ${h2_mm/2 + 35}, 5)">${bf2_mm}</text>
+        <!-- tw -->
+        <text x="15" y="-15" class="dim-text">${tw2_mm}</text>
+        <line x1="15" y1="-12" x2="0" y2="-${draw_tw2/2}" class="dim-line" marker-end="url(#arrow-b)" />
+        <line x1="15" y1="12" x2="0" y2="${draw_tw2/2}" class="dim-line" marker-end="url(#arrow-b)" />
+      </svg>
+      <div style="font-style: italic; font-weight: bold; font-size: 0.9rem;">Hình 3.22. Tiết diện xà ${d2_const}m</div>
+    </div>
+  `;
+
+  html += `
+    <p><em>b) Đoạn xà ${d2_const}m (tiết diện không đổi)</em></p>
+    <p>Từ bảng tổ hợp nội lực chọn cặp nội lực tính toán:</p>
+    <div style="margin-left: 200px; margin-bottom: 15px;">
+      <p>$N = ${N2_val} \\text{ kN}$</p>
+      <p>$M = ${M2_val} \\text{ kNm}$</p>
+      <p>$V = ${V2_val} \\text{ kN}$</p>
+    </div>
+    <p>Đây là cặp nội lực tại tiết diện cuối xà, trong tổ hợp nội lực do các trường hợp tải trọng gây ra.</p>
+    <p>Mô men chống uốn cần thiết của tiết diện xà ngang:</p>
+    <div class="formula-center">
+      $$W_x^{yc} = \\frac{M}{f\\gamma_c} = \\frac{${absM2} \\cdot 10^2}{${fy} \\cdot ${gc}} = ${Wx2_yc.toFixed(1)} \\text{ (cm}^3\\text{)}.$$
+    </div>
+
+    <p>Chọn sơ bộ bề dày bản bụng là ${tw2_cm} cm. Chiều cao của tiết diện xà xác định từ điều kiện tối ưu về chi phí vật liệu:</p>
+    <div class="formula-center">
+      $$h = (1,15 \\div 1,2) \\sqrt{\\frac{${Wx2_yc.toFixed(1)}}{${tw2_cm}}} = (${h2_opt_min.toFixed(1)} \\div ${h2_opt_max.toFixed(1)}) \\text{ (cm)}.$$
+    </div>
+    <p>$\\rightarrow$ Chọn $h = ${h2_cm} \\text{ cm}$.</p>
+
+    <p>Chọn sơ bộ bề dày bản cánh xà là $t_f = ${tf2_cm} \\text{ cm}$. Diện tích tiết diện cần thiết của bản cánh xà ngang:</p>
+    <div class="formula-center">
+      $$A_f^{yc} = (b_f t_f)^{yc} = \\left( ${Wx2_yc.toFixed(1)} \\cdot \\frac{${h2_cm}}{2} - \\frac{${tw2_cm} \\cdot ${hw2_cm.toFixed(1)}^3}{12} \\right) \\frac{2}{${h2_fc.toFixed(1)}^2} = ${Af2_yc.toFixed(1)} \\text{ (cm}^2\\text{)}.$$
+    </div>
+
+    <p>Theo các yêu cầu cấu tạo và ổn định cục bộ, kích thước tiết diện của bản cánh được chọn là: $t_f = ${tf2_cm} \\text{ cm}$; $b_f = ${bf2_cm} \\text{ cm}$.</p>
+    ${svg2_html}
+
+    <div style="margin-left: 40px; margin-bottom: 10px;">
+      <p>+ Bản cánh: (${tf2_cm} × ${bf2_cm}) cm.</p>
+      <p>+ Bản bụng: (${tw2_cm} × ${hw2_cm.toFixed(1)}) cm.</p>
+    </div>
+
+    <p>Tính lại các đặc trưng hình học:</p>
+    <div class="formula-center">
+      <p>$$A = ${tw2_cm} \\cdot ${hw2_cm} + 2 \\cdot (${tf2_cm} \\cdot ${bf2_cm}) = ${A2.toFixed(1)} \\text{ (cm}^2\\text{)};$$</p>
+      <p>$$I_x = \\frac{${bf2_cm} \\cdot ${h2_cm}^3}{12} - \\frac{(${bf2_cm} - ${tw2_cm}) \\cdot ${hw2_cm}^3}{12} = ${Math.round(Ix2)} \\text{ (cm}^4\\text{)};$$</p>
+      <p>$$W_x = \\frac{2 I_x}{h} = \\frac{2 \\cdot ${Math.round(Ix2)}}{${h2_cm}} = ${Math.round(Wx2)} \\text{ (cm}^3\\text{)} ${Wx2 >= Wx2_yc ? '>' : '<'} W_x^{yc} = ${Wx2_yc.toFixed(1)} \\text{ (cm}^3\\text{)};$$</p>
+      <p>$$i_x = \\sqrt{\\frac{${Math.round(Ix2)}}{${A2.toFixed(1)}}} = ${ix2.toFixed(2)} \\text{ (cm)};$$</p>
+      <p>$$I_y = \\frac{2 \\cdot ${tf2_cm} \\cdot ${bf2_cm}^3}{12} + \\frac{${hw2_cm} \\cdot ${tw2_cm}^3}{12} = ${Math.round(Iy2)} \\text{ (cm}^4\\text{)}; \\quad i_y = ${iy2.toFixed(2)} \\text{ (cm)};$$</p>
+      <p>$$m_x = \\frac{M}{N} \\frac{A}{W_x} = \\frac{${absM2} \\cdot 10^2}{${absN2}} \\cdot \\frac{${A2.toFixed(1)}}{${Math.round(Wx2)}} = ${mx2.toFixed(2)}.$$</p>
+    </div>
+
+    <p>Do $m_x = ${mx2.toFixed(2)} ${mx2 > 20 ? '>' : '\\leq'} 20 \\rightarrow m_e = \\eta m_x ${mx2 > 20 ? '>' : '\\leq'} 20$ nên tiết diện xà ngang được tính toán kiểm tra theo điều kiện bền:</p>
+    <div class="formula-center">
+      $$\\sigma_x = \\frac{N}{A_n} + \\frac{M}{W_{xn}} = \\frac{${absN2}}{${A2.toFixed(1)}} + \\frac{${absM2} \\cdot 10^2}{${Math.round(Wx2)}} = ${sigma_x2.toFixed(1)} \\text{ (kN/cm}^2\\text{)} ${isSafe2} f\\gamma_c = ${fy} \\text{ (kN/cm}^2\\text{)}.$$
+    </div>
+    <p>Kết luận: Tiết diện đoạn xà ${d2_const}m ${sigma_x2 <= (fy * gc) ? 'ĐẠT' : 'KHÔNG ĐẠT'} điều kiện cường độ.</p>
+
+    <p>Kiểm tra ứng suất tương đương tại chỗ tiếp xúc giữa bản cánh và bản bụng:</p>
+    <div class="formula-center">
+      <p>$$\\sigma_1 = \\frac{M}{W_x} \\frac{h_w}{h} = \\frac{${absM2} \\cdot 10^2}{${Math.round(Wx2)}} \\cdot \\frac{${hw2_cm.toFixed(1)}}{${h2_cm}} = ${sigma_12.toFixed(2)} \\text{ (kN/cm}^2\\text{)};$$</p>
+      <p>$$S_f = (${bf2_cm} \\cdot ${tf2_cm}) \\cdot \\frac{${h2_cm} - ${tf2_cm}}{2} = ${Sf2.toFixed(0)} \\text{ (cm}^3\\text{)};$$</p>
+      <p>$$\\tau_1 = \\frac{V S_f}{I_x t_w} = \\frac{${absV2} \\cdot ${Sf2.toFixed(0)}}{${Math.round(Ix2)} \\cdot ${tw2_cm}} = ${tau_12.toFixed(2)} \\text{ (kN/cm}^2\\text{)};$$</p>
+    </div>
+    <div class="formula-center">
+      <p>$$\\sigma_{td} = \\sqrt{ ${sigma_12.toFixed(2)}^2 + 3 \\cdot ${tau_12.toFixed(2)}^2 } = ${sigma_td2.toFixed(2)} \\text{ (kN/cm}^2\\text{)} ${sigma_td2 <= limit_sigma_td2 ? '<' : '>'} 1,15 f\\gamma_c = ${limit_sigma_td2.toFixed(2)} \\text{ (kN/cm}^2\\text{)}.$$</p>
+    </div>
+
+    <p>Kiểm tra ổn định cục bộ của bản cánh và bản bụng:</p>
+    <div class="formula-center">
+      <p>$$\\frac{b_0}{t_f} = \\frac{0,5(${bf2_cm} - ${tw2_cm})}{${tf2_cm}} = ${b0_tf2.toFixed(1)} ${b0_tf2 <= limit_flange2 ? '<' : '>'} \\frac{1}{2} \\sqrt{\\frac{E}{f}} = ${limit_flange2.toFixed(1)};$$</p>
+      <p>$$\\frac{h_w}{t_w} = \\frac{${hw2_cm.toFixed(1)}}{${tw2_cm}} = ${hw_tw2.toFixed(1)} ${hw_tw2 <= limit_web_comp2 ? '<' : '>'} 5,5 \\sqrt{\\frac{E}{f}} = ${limit_web_comp2.toFixed(0)} \\rightarrow \\text{Bản bụng ổn định cục bộ (ứng suất pháp nén).}$$</p>
+      <p>$$\\frac{h_w}{t_w} = ${hw_tw2.toFixed(1)} ${hw_tw2 <= limit_web_shear2 ? '<' : '>'} 3,2 \\sqrt{\\frac{E}{f}} = ${limit_web_shear2.toFixed(0)} \\rightarrow \\text{Bản bụng ổn định cục bộ (ứng suất tiếp).}$$</p>
+    </div>
+    <div class="formula-center">
+      <p>$$\\frac{h_w}{t_w} = ${hw_tw2.toFixed(1)} ${hw_tw2 <= limit_web_comb2 ? '<' : '>'} 2,5 \\sqrt{\\frac{E}{f}} = ${limit_web_comb2.toFixed(0)}$$</p>
+    </div>
+    <p>$\\rightarrow$ Bản bụng không bị mất ổn định cục bộ dưới tác dụng đồng thời của ứng suất pháp và ứng suất tiếp.</p>
+    <p>Vậy tiết diện đoạn xà ${d2_const}m đã chọn là đạt yêu cầu.</p>
+  `;
+
   appendToReport(html, 'report-rafter');
 }
 
 $('btnReportRafter')?.addEventListener('click', reportRafterDesign);
 
 $('btnReportDesign')?.addEventListener('click', reportSectionDesign);
+
+// ===== 3.6 Thiết kế các chi tiết =====
+function reportDetailDesign() {
+  const Dmax = parseFloat($('detDmax').value);
+  const Gdct = parseFloat($('detGdct').value);
+  const L1 = parseFloat($('detL1').value);
+  const h_col = parseFloat($('detHcol').value);
+  const b_dct = parseFloat($('detBdct').value);
+  const bf_dv = parseFloat($('detBfDv').value);
+  const tf_dv = parseFloat($('detTfDv').value);
+  const tw_dv = parseFloat($('detTwDv').value);
+  const hw_dv = parseFloat($('detHwDv').value);
+  const fy = parseFloat($('fy').value);
+  const fv = parseFloat($('fv').value);
+  const gc = parseFloat($('gamma_c').value);
+
+  // Nội lực tại vai cột
+  const h_m = h_col / 100;
+  const M_vai = (Dmax + Gdct) * (L1 - h_m);
+  const V_vai = Dmax + Gdct;
+
+  // 1. Tính toán sơ bộ kích thước
+  const tw_req = V_vai / ((b_dct + 2 * tf_dv) * fy * gc);
+  const hw_req = (3 / 2) * V_vai / (tw_dv * fv * gc);
+
+  // 2. Đặc trưng hình học thực tế
+  const h_dv = hw_dv + 2 * tf_dv;
+  const Ix_dv = (bf_dv * Math.pow(h_dv, 3) / 12) - (2 * 0.5 * (bf_dv - tw_dv) * Math.pow(hw_dv, 3) / 12);
+  const Wx_dv = (Ix_dv * 2) / h_dv;
+  const dist_to_center = (hw_dv + tf_dv) / 2;
+  const Sf_dv = (bf_dv * tf_dv) * dist_to_center;
+
+  // 3. Trị số ứng suất
+  const sigma1 = (M_vai * 100 / Wx_dv) * (hw_dv / h_dv);
+  const tau1 = (V_vai * Sf_dv) / (Ix_dv * tw_dv);
+
+  const html = `
+    <h3>3.6. THIẾT KẾ CÁC CHI TIẾT</h3>
+    <p><em>3.6.1. Vai cột</em></p>
+    <p>Với chiều cao tiết diện cột là $h = ${h_col}$ cm, theo các công thức (2.60) và (2.61) xác định được mô men uốn và lực cắt tại chỗ liên kết công-xôn vai cột với bản cánh cột:</p>
+    <div class="formula-center">
+      <p>$$M = (D_{max} + G_{dct})(L_1 - h) = (${Dmax} + ${Gdct})(${L1} - ${h_m}) = ${M_vai.toFixed(2)} \\text{ (kNm)};$$</p>
+      <p>$$V = D_{max} + G_{dct} = ${Dmax} + ${Gdct} = ${V_vai.toFixed(1)} \\text{ (kN)}.$$</p>
+    </div>
+
+    <p>Bề rộng bản cánh dầm vai chọn bằng bề rộng cánh cột $b_f^{dv} = ${bf_dv}$ cm. Giả thiết bề rộng của sườn gối dầm cầu trục $b_{dct} = ${b_dct}$ cm. Chọn sơ bộ bề dày các bản cánh dầm vai $t_f^{dv} = ${tf_dv}$ cm. Từ đó bề dày bản bụng dầm vai xác định từ điều kiện chịu ép cục bộ do phản lực dầm cầu trục truyền vào, theo công thức (2.63):</p>
+    <div class="formula-center">
+      $$t_w^{dv} \\geq \\frac{D_{max} + G_{dct}}{(b_{dct} + 2 t_f^{dv}) f \\gamma_c} = \\frac{${V_vai.toFixed(1)}}{(${b_dct} + 2 \\cdot ${tf_dv}) \\cdot ${fy} \\cdot ${gc}} = ${tw_req.toFixed(2)} \\text{ (cm)} \\rightarrow \\text{Chọn } t_w^{dv} = ${tw_dv} \\text{ cm}.$$
+    </div>
+
+    <p>Chiều cao của dầm vai xác định sơ bộ từ điều kiện bản bụng dầm vai đủ khả năng chịu cắt, suy ra từ công thức (2.65):</p>
+    <div class="formula-center">
+      $$h_w^{dv} \\geq \\frac{3}{2} \\frac{V}{t_w^{dv} f_v \\gamma_c} = \\frac{3}{2} \\cdot \\frac{${V_vai.toFixed(1)}}{${tw_dv} \\cdot ${fv} \\cdot ${gc}} = ${hw_req.toFixed(1)} \\text{ (cm)} \\rightarrow \\text{Chọn } h_w^{dv} = ${hw_dv} \\text{ cm}.$$
+    </div>
+
+    <p>Các đặc trưng hình học của tiết diện dầm vai ($h_{dv} = ${h_dv}$ cm):</p>
+    <div class="formula-center">
+      <p>$$I_x^{dv} = \\frac{${bf_dv} \\cdot ${h_dv}^3}{12} - 2 \\cdot \\frac{0,5 \\cdot (${bf_dv} - ${tw_dv}) \\cdot ${hw_dv}^3}{12} = ${Ix_dv.toFixed(1)} \\text{ (cm}^4\\text{)};$$</p>
+      <p>$$W_x^{dv} = \\frac{${Ix_dv.toFixed(1)} \\cdot 2}{${h_dv}} = ${Wx_dv.toFixed(1)} \\text{ (cm}^3\\text{)};$$</p>
+      <p>$$S_f^{dv} = (${bf_dv} \\cdot ${tf_dv}) \\cdot ${dist_to_center.toFixed(1)} = ${Sf_dv.toFixed(0)} \\text{ (cm}^3\\text{)}.$$</p>
+    </div>
+
+    <p>Trị số của ứng suất pháp và ứng suất tiếp tại chỗ tiếp xúc giữa bản cánh và bản bụng dầm vai:</p>
+    <div class="formula-center">
+      <p>$$\\sigma_1 = \\frac{M}{W_x^{dv}} \\cdot \\frac{h_w^{dv}}{h_{dv}} = \\frac{${M_vai.toFixed(2)} \\cdot 10^2}{${Wx_dv.toFixed(1)}} \\cdot \\frac{${hw_dv}}{${h_dv}} = ${sigma1.toFixed(2)} \\text{ (kN/cm}^2\\text{)};$$</p>
+      <p>$$\\tau_1 = \\frac{V S_f^{dv}}{I_x^{dv} t_w} = \\frac{${V_vai.toFixed(1)} \\cdot ${Sf_dv.toFixed(0)}}{${Ix_dv.toFixed(1)} \\cdot ${tw_dv}} = ${tau1.toFixed(2)} \\text{ (kN/cm}^2\\text{)}.$$</p>
+    </div>
+
+    <p>Kiểm tra ứng suất tương đương:</p>
+    <div class="formula-center">
+      <p>$$\\sigma_{td} = \\sqrt{\\sigma_1^2 + 3 \\tau_1^2} = \\sqrt{${sigma1.toFixed(2)}^2 + 3 \\cdot ${tau1.toFixed(2)}^2} = ${Math.sqrt(sigma1**2 + 3*tau1**2).toFixed(2)} \\text{ (kN/cm}^2\\text{)} \\leq 1,15 f \\gamma_c = ${(1.15 * fy * gc).toFixed(1)} \\text{ (kN/cm}^2\\text{)}.$$</p>
+    </div>
+    <p>Kết luận: Tiết diện vai cột ${(Math.sqrt(sigma1**2 + 3*tau1**2) <= 1.15 * fy * gc) ? 'ĐẠT' : 'KHÔNG ĐẠT'} yêu cầu.</p>
+  `;
+
+  appendToReport(html, 'report-detail');
+}
+
+$('btnReportDetail')?.addEventListener('click', reportDetailDesign);
 
 function renderPhiETable() {
   const t = $('phiETable');

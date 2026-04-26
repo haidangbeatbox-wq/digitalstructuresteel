@@ -68,6 +68,7 @@
       <button class="mod-btn" data-mod="mod-load">⚖️ Tải Trọng</button>
       <button class="mod-btn" data-mod="mod-design">📐 Thiết Kế Tiết Diện</button>
       <button class="mod-btn" data-mod="mod-rafter">🏗️ Thiết Kế Xà Ngang</button>
+      <button class="mod-btn" data-mod="mod-detail">🔩 Thiết Kế Chi Tiết</button>
     </div>
 
     <!-- ===== Module: Thông Số Đầu Vào ===== -->
@@ -509,22 +510,60 @@
                 <div class="form-group"><label>Dày bản bụng t<sub>w</sub></label><input type="number" id="raft_tw" value="8" step="1"></div>
                 <div class="form-group"><label>Dày bản cánh t<sub>f</sub></label><input type="number" id="raft_tf" value="12" step="1"></div>
               </div>
-              <button class="btn-outline" id="btnSuggestRaft" style="width:100%; margin-bottom:15px; border-style: dotted;">✨ Gợi ý tiết diện sơ bộ (L/30)</button>
-              
-              <div class="divider"></div>
-              <div class="section-label">3. Các hệ số ổn định & điều kiện biên</div>
-              <div class="form-row form-row-3">
+              <div class="form-row form-row-2">
                 <div class="form-group"><label>Chiều dài tính toán l<sub>x</sub> (m)</label><input type="number" id="raftLx" value="12.5" step="0.5"></div>
                 <div class="form-group"><label>Khoảng cách xà gồ l<sub>y</sub> (m)</label><input type="number" id="raftLy" value="1.5" step="0.1"></div>
-                <div class="form-group"><label>Hệ số làm việc γ<sub>c</sub></label><input type="number" id="raft_gamma_c" value="1.0" step="0.05"></div>
               </div>
-              <div class="form-row form-row-2">
-                <div class="form-group"><label>Hệ số φ (Tự động)</label><input type="number" id="raft_phi" value="0.95" readonly style="background:#f8fafc"></div>
-                <div class="form-group"><label>Hệ số φ<sub>e</sub> (Tự động)</label><input type="number" id="raft_phi_e" value="0.85" readonly style="background:#f8fafc"></div>
+              <button class="btn-outline" id="btnSuggestRaft" style="width:100%; margin-bottom:15px; border-style: dotted;">✨ Gợi ý tiết diện sơ bộ (từ Wx cần thiết)</button>
+              <div class="divider"></div>
+              <div class="section-label">3. Nội lực thiết kế (Đoạn xà tiết diện không đổi)</div>
+              <div class="form-row form-row-3">
+                <div class="form-group"><label>Mô men M₂ (kNm)</label><input type="number" id="raftM2" value="101.69" step="0.01"></div>
+                <div class="form-group"><label>Lực dọc N₂ (kN)</label><input type="number" id="raftN2" value="-34.66" step="0.01"></div>
+                <div class="form-group"><label>Lực cắt V₂ (kN)</label><input type="number" id="raftV2" value="-3.47" step="0.01"></div>
               </div>
+              <div class="divider"></div>
+              <div class="section-label">4. Tiết diện đoạn xà không đổi (mm)</div>
+              <div class="form-row form-row-4">
+                <div class="form-group"><label>Chiều cao h₂</label><input type="number" id="raft_h2" value="250" step="10"></div>
+                <div class="form-group"><label>Bề rộng cánh b<sub>f2</sub></label><input type="number" id="raft_bf2" value="200" step="10"></div>
+                <div class="form-group"><label>Dày bản bụng t<sub>w2</sub></label><input type="number" id="raft_tw2" value="6" step="1"></div>
+                <div class="form-group"><label>Dày bản cánh t<sub>f2</sub></label><input type="number" id="raft_tf2" value="10" step="1"></div>
+              </div>
+              <button class="btn-outline" id="btnSuggestRaft2" style="width:100%; margin-bottom:15px; border-style: dotted;">✨ Gợi ý tiết diện sơ bộ (từ Wx cần thiết)</button>
             </div>
           </div>
           <button class="btn-report" id="btnReportRafter" type="button">📝 Thêm vào thuyết minh</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== Module: Thiết Kế Chi Tiết ===== -->
+    <div class="mod-content" id="mod-detail">
+      <div class="dashboard-layout">
+        <div class="dash-left">
+          <div class="panel">
+            <div class="panel-head"><h2>🔩 Thiết Kế Các Chi Tiết</h2></div>
+            <div class="panel-body">
+              <div class="section-label">1. Vai cột (3.6.1)</div>
+              <div class="form-row form-row-3">
+                <div class="form-group"><label>D<sub>max</sub> (kN)</label><input type="number" id="detDmax" value="178.5" step="0.1"></div>
+                <div class="form-group"><label>G<sub>dct</sub> (kN)</label><input type="number" id="detGdct" value="6.3" step="0.1"></div>
+                <div class="form-group"><label>L₁ - Lệch tâm (m)</label><input type="number" id="detL1" value="0.75" step="0.05"></div>
+              </div>
+              <div class="form-row form-row-3">
+                <div class="form-group"><label>h cột tại vai (cm)</label><input type="number" id="detHcol" value="40" step="1"></div>
+                <div class="form-group"><label>b<sub>dct</sub> - Rộng sườn dầm CT (cm)</label><input type="number" id="detBdct" value="20" step="1"></div>
+                <div class="form-group"><label>b<sub>f</sub><sup>dv</sup> - Rộng cánh vai (cm)</label><input type="number" id="detBfDv" value="20" step="1"></div>
+              </div>
+              <div class="form-row form-row-3">
+                <div class="form-group"><label>t<sub>f</sub><sup>dv</sup> - Dày cánh vai (cm)</label><input type="number" id="detTfDv" value="1" step="0.2"></div>
+                <div class="form-group"><label>t<sub>w</sub><sup>dv</sup> - Dày bụng vai (cm)</label><input type="number" id="detTwDv" value="0.8" step="0.2"></div>
+                <div class="form-group"><label>h<sub>w</sub><sup>dv</sup> - Cao bụng vai (cm)</label><input type="number" id="detHwDv" value="38" step="1"></div>
+              </div>
+            </div>
+          </div>
+          <button class="btn-report" id="btnReportDetail" type="button">📝 Thêm vào thuyết minh</button>
         </div>
       </div>
     </div>
@@ -550,6 +589,6 @@
 
 <script src="data/phi_e_table.js?v=20260425"></script>
 <script src="data/phi_y_table.js?v=20260425"></script>
-<script src="app.js?v=202604252"></script>
+<script src="app.js?v=20260426"></script>
 </body>
 </html>
